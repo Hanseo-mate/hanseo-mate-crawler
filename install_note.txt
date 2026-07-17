@@ -1,0 +1,13 @@
+HanSeo Mate Crawler - install note
+
+1. Install packages once:
+python -m pip install -r requirements.txt
+
+2. Or install directly:
+python -m pip install requests beautifulsoup4 pymysql
+
+3. Run crawler:
+python main.py
+
+If import errors still appear in PyCharm, make sure the project's Python interpreter
+is the same interpreter where the packages were installed.
