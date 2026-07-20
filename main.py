@@ -1,6 +1,11 @@
+import importlib.util
+import base64
 import logging
+import os
 import re
+import sys
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Optional
@@ -23,6 +28,10 @@ DETAIL_URL_TEMPLATE = (
 )
 REQUEST_DELAY_SECONDS = 1
 REQUEST_TIMEOUT = (10, 30)
+HTML_PARSER = "html5lib"
+ACTIVE_HTML_PARSER = "html.parser"
+IMAGE_SAVE_DIRECTORY = "/home/hanseo-mate/images"
+IMAGE_BASE_URL = os.getenv("IMAGE_BASE_URL", "http://<VM_IP_또는_도메인>/images/")
 
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -48,6 +57,8 @@ CREATE TABLE IF NOT EXISTS notices (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
+# `content_html` is kept as LONGTEXT, while embedded Base64 images are extracted
+# before upsert so oversized inline payloads do not trigger `Data too long`.
 ALTER_NOTICES_CONTENT_HTML_SQL = """
 ALTER TABLE notices
 MODIFY content_html LONGTEXT NOT NULL;
@@ -109,6 +120,10 @@ WHERE post_date <= DATE_SUB(CURDATE(), INTERVAL 2 YEAR);
 """
 
 ORIGIN_NOTICE_ID_PATTERN = re.compile(r"goView\('(?:[^']*)','([^']+)'")
+DATA_IMAGE_PATTERN = re.compile(
+    r"^data:image/(?P<extension>[a-zA-Z0-9.+-]+);base64,(?P<data>.+)$",
+    flags=re.IGNORECASE | re.DOTALL,
+)
 
 
 @dataclass(frozen=True)
@@ -142,11 +157,90 @@ class CrawlStats:
     notices_deleted: int = 0
 
 
+@dataclass(frozen=True)
+class FetchedDocument:
+    soup: BeautifulSoup
+    html_text: str
+
+
 def configure_logging() -> None:
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
+
+
+def ensure_image_save_directory() -> None:
+    os.makedirs(IMAGE_SAVE_DIRECTORY, exist_ok=True)
+
+
+def normalize_image_extension(raw_extension: str) -> str:
+    normalized = raw_extension.strip().lower()
+    if normalized == "jpeg":
+        return "jpg"
+    if "+" in normalized:
+        normalized = normalized.split("+", 1)[0]
+
+    sanitized = re.sub(r"[^a-z0-9]", "", normalized)
+    return sanitized or "bin"
+
+
+def build_image_public_url(file_name: str) -> str:
+    return f"{IMAGE_BASE_URL.rstrip('/')}/{file_name}"
+
+
+def process_embedded_images(content_html: str) -> str:
+    soup = BeautifulSoup(content_html, ACTIVE_HTML_PARSER)
+
+    for image_tag in soup.find_all("img"):
+        src = image_tag.get("src")
+        if not src or not src.startswith("data:image/"):
+            continue
+
+        match = DATA_IMAGE_PATTERN.match(src)
+        if match is None:
+            logging.warning("임베디드 이미지 형식 파싱 실패: src_prefix=%s", src[:64])
+            continue
+
+        extension = normalize_image_extension(match.group("extension"))
+        encoded_data = re.sub(r"\s+", "", match.group("data"))
+        file_name = f"{uuid.uuid4().hex}.{extension}"
+        file_path = os.path.join(IMAGE_SAVE_DIRECTORY, file_name)
+
+        try:
+            image_binary = base64.b64decode(encoded_data, validate=True)
+            with open(file_path, "wb") as image_file:
+                image_file.write(image_binary)
+            image_tag["src"] = build_image_public_url(file_name)
+            logging.info("임베디드 이미지 저장 완료: %s", file_path)
+        except Exception as exc:
+            logging.warning(
+                "임베디드 이미지 처리 실패, 원본 src 유지: file_name=%s, error=%s",
+                file_name,
+                exc,
+            )
+
+    return soup.decode_contents().strip()
+
+
+def resolve_html_parser() -> str:
+    preferred = HTML_PARSER.strip().lower()
+    if preferred == "html5lib":
+        if importlib.util.find_spec("html5lib") is not None:
+            return "html5lib"
+        if importlib.util.find_spec("lxml") is not None:
+            return "lxml"
+        return "html.parser"
+
+    if preferred == "lxml":
+        if importlib.util.find_spec("lxml") is not None:
+            return "lxml"
+        if importlib.util.find_spec("html5lib") is not None:
+            return "html5lib"
+        return "html.parser"
+
+    return "html.parser"
 
 
 def create_session() -> requests.Session:
@@ -175,12 +269,18 @@ def ensure_schema(connection: pymysql.connections.Connection) -> None:
     connection.commit()
 
 
-def fetch_document(session: requests.Session, url: str) -> BeautifulSoup:
+def fetch_document(session: requests.Session, url: str) -> FetchedDocument:
     try:
         response = session.get(url, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         response.encoding = response.apparent_encoding or response.encoding
-        return BeautifulSoup(response.text, "html.parser")
+        html_text = response.text
+        logging.debug("응답 수신: url=%s, html_length=%s", url, len(html_text))
+
+        return FetchedDocument(
+            soup=BeautifulSoup(html_text, ACTIVE_HTML_PARSER),
+            html_text=html_text,
+        )
     finally:
         time.sleep(REQUEST_DELAY_SECONDS)
 
@@ -278,6 +378,107 @@ def remove_unwanted_tags(container: Tag) -> None:
         tag.decompose()
 
 
+def find_tag_end(html_text: str, lt_index: int) -> int:
+    quote_char: Optional[str] = None
+    cursor = lt_index + 1
+    text_len = len(html_text)
+
+    while cursor < text_len:
+        char = html_text[cursor]
+
+        if quote_char is None and (char == '"' or char == "'"):
+            quote_char = char
+        elif quote_char is not None and char == quote_char:
+            quote_char = None
+        elif quote_char is None and char == ">":
+            return cursor
+
+        cursor += 1
+
+    return -1
+
+
+def extract_tag_name(raw_tag: str) -> tuple[str, bool, bool]:
+    stripped = raw_tag.strip()
+    if not stripped:
+        return "", False, False
+
+    is_closing = stripped.startswith("/")
+    if is_closing:
+        stripped = stripped[1:].lstrip()
+
+    if not stripped:
+        return "", is_closing, False
+
+    if stripped[0] in ("!", "?"):
+        return "", is_closing, False
+
+    name_chars: list[str] = []
+    for char in stripped:
+        if char.isalnum() or char in (":", "-", "_"):
+            name_chars.append(char)
+            continue
+        break
+
+    if not name_chars:
+        return "", is_closing, False
+
+    is_self_closing = stripped.rstrip().endswith("/")
+    return "".join(name_chars).lower(), is_closing, is_self_closing
+
+
+def extract_view_box_html_raw(html_text: str) -> Optional[str]:
+    view_box_match = re.search(
+        r'<div[^>]*class=["\'][^"\']*viewBox[^"\']*["\'][^>]*>',
+        html_text,
+        flags=re.IGNORECASE,
+    )
+    if view_box_match is None:
+        return None
+
+    cursor = view_box_match.end()
+    depth = 1
+    text_len = len(html_text)
+
+    while cursor < text_len:
+        lt_index = html_text.find("<", cursor)
+        if lt_index == -1:
+            return None
+
+        if html_text.startswith("<!--", lt_index):
+            comment_end = html_text.find("-->", lt_index + 4)
+            if comment_end == -1:
+                return None
+            cursor = comment_end + 3
+            continue
+
+        gt_index = find_tag_end(html_text, lt_index)
+        if gt_index == -1:
+            return None
+
+        raw_tag = html_text[lt_index + 1 : gt_index]
+        tag_name, is_closing, is_self_closing = extract_tag_name(raw_tag)
+
+        if tag_name in ("script", "style", "noscript", "textarea") and not is_closing:
+            close_tag = f"</{tag_name}>"
+            close_index = html_text.lower().find(close_tag, gt_index + 1)
+            if close_index == -1:
+                return None
+            cursor = close_index + len(close_tag)
+            continue
+
+        if tag_name == "div" and not is_closing and not is_self_closing:
+            depth += 1
+        elif tag_name == "div" and is_closing:
+            depth -= 1
+            if depth == 0:
+                return html_text[view_box_match.end() : lt_index]
+
+        cursor = gt_index + 1
+
+    return None
+
+
 def parse_metadata_value(info_items: list[Tag], label: str) -> Optional[str]:
     for item in info_items:
         strong = item.find("strong")
@@ -322,7 +523,8 @@ def parse_attachments(article: Tag) -> list[dict[str, str]]:
     return attachments
 
 
-def parse_detail_page(soup: BeautifulSoup, summary: NoticeSummary) -> NoticeRecord:
+def parse_detail_page(document: FetchedDocument, summary: NoticeSummary) -> NoticeRecord:
+    soup = document.soup
     article = soup.select_one("article.board-text")
     if article is None:
         raise ValueError(f"공지 {summary.origin_notice_id}: 상세 article을 찾을 수 없습니다.")
@@ -334,10 +536,24 @@ def parse_detail_page(soup: BeautifulSoup, summary: NoticeSummary) -> NoticeReco
     if view_box is None:
         raise ValueError(f"공지 {summary.origin_notice_id}: 본문 viewBox를 찾을 수 없습니다.")
 
-    remove_unwanted_tags(view_box)
-    content_html = view_box.decode_contents().strip()
+    parsed_content_html = view_box.decode_contents().strip()
+    raw_content_html = extract_view_box_html_raw(document.html_text)
+    if raw_content_html is not None and raw_content_html.strip():
+        content_html = raw_content_html.strip()
+    else:
+        content_html = parsed_content_html
+
+    logging.debug(
+        "본문 추출: origin_notice_id=%s, raw_length=%s, parsed_length=%s, saved_length=%s",
+        summary.origin_notice_id,
+        len(raw_content_html.strip()) if raw_content_html and raw_content_html.strip() else -1,
+        len(parsed_content_html),
+        len(content_html),
+    )
     if not content_html:
         raise ValueError(f"공지 {summary.origin_notice_id}: 본문 HTML이 비어 있습니다.")
+
+    content_html = process_embedded_images(content_html)
 
     author = parse_metadata_value(info_items, "작성자") or summary.author
     post_date_text = parse_metadata_value(info_items, "작성일")
@@ -421,8 +637,8 @@ def fetch_notice_detail(
         status_yn=summary.status_yn,
     )
     logging.info("상세 요청: %s", urljoin(BASE_URL, detail_url))
-    detail_soup = fetch_document(session, detail_url)
-    return parse_detail_page(detail_soup, summary)
+    detail_document = fetch_document(session, detail_url)
+    return parse_detail_page(detail_document, summary)
 
 
 def crawl_and_sync_notices() -> CrawlStats:
@@ -437,8 +653,8 @@ def crawl_and_sync_notices() -> CrawlStats:
                 logging.info("목록 요청: %s", page_url)
 
                 try:
-                    list_soup = fetch_document(session, page_url)
-                    notices = parse_list_page(list_soup, page_num)
+                    list_document = fetch_document(session, page_url)
+                    notices = parse_list_page(list_document.soup, page_num)
                     stats.pages_processed += 1
                 except Exception as exc:
                     logging.exception("페이지 %s 처리 실패: %s", page_num, exc)
@@ -472,7 +688,21 @@ def crawl_and_sync_notices() -> CrawlStats:
 
 
 def main() -> None:
+    global ACTIVE_HTML_PARSER
+
     configure_logging()
+    ACTIVE_HTML_PARSER = resolve_html_parser()
+    if ACTIVE_HTML_PARSER != HTML_PARSER:
+        logging.warning(
+            "요청 파서(%s)를 사용할 수 없어 대체 파서(%s)를 사용합니다. python=%s",
+            HTML_PARSER,
+            ACTIVE_HTML_PARSER,
+            sys.executable,
+        )
+    else:
+        logging.info("HTML 파서=%s, python=%s", ACTIVE_HTML_PARSER, sys.executable)
+
+    ensure_image_save_directory()
 
     try:
         stats = crawl_and_sync_notices()
