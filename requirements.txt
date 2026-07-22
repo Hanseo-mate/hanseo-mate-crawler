@@ -2,3 +2,5 @@ requests
 beautifulsoup4
 pymysql
 html5lib
+fastapi
+uvicorn
