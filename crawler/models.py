@@ -42,7 +42,8 @@ class NoticeRecord:
 @dataclass
 class CrawlStats:
     pages_processed: int = 0
-    notices_upserted: int = 0
+    notices_inserted: int = 0
+    notices_updated: int = 0
     notices_failed: int = 0
     notices_deleted: int = 0
 

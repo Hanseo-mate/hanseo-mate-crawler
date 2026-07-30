@@ -3,7 +3,14 @@ import logging
 from bs4 import BeautifulSoup, Tag
 
 from ..config import BASE_URL
-from ..database import delete_expired_notices, ensure_schema, get_db_connection, sync_notice
+from ..database import (
+    delete_expired_notices,
+    ensure_schema,
+    get_db_connection,
+    get_existing_notice_summaries,
+    insert_notice_if_absent,
+    sync_notice,
+)
 from ..html_utils import (
     extract_notice_title,
     extract_onclick_args,
@@ -170,24 +177,87 @@ class HanseoNoticeCrawler:
                     try:
                         list_document = fetch_document(session, page_url)
                         notices = self.parse_list_page(list_document.soup, page_num)
+                        existing_notice_summaries = get_existing_notice_summaries(
+                            connection,
+                            self.board.key,
+                            [summary.origin_notice_id for summary in notices],
+                        )
                         stats.pages_processed += 1
                     except Exception as exc:
                         logging.exception("%s 페이지 %s 처리 실패: %s", self.board.name, page_num, exc)
                         continue
 
                     for summary in notices:
-                        try:
-                            notice = self.fetch_notice_detail(session, summary)
-                            notice_id = sync_notice(connection, notice)
-                            stats.notices_upserted += 1
-                            logging.info(
-                                "동기화 완료: notice_type=%s, notice_id=%s, origin_notice_id=%s, attachments=%s, post_date=%s",
-                                notice.notice_type,
-                                notice_id,
-                                notice.origin_notice_id,
-                                len(notice.attachments),
-                                notice.post_date,
+                        existing_notice = existing_notice_summaries.get(summary.origin_notice_id)
+                        if existing_notice is not None and (
+                            existing_notice["title"] == summary.title
+                            and existing_notice["author"] == summary.author
+                            and existing_notice["post_date"] == summary.post_date
+                            and existing_notice["is_hot"] == summary.is_hot
+                        ):
+                            logging.debug(
+                                "변경 없는 기존 공지 건너뜀: notice_type=%s, origin_notice_id=%s",
+                                self.board.key,
+                                summary.origin_notice_id,
                             )
+                            continue
+
+                        try:
+                            if existing_notice is None:
+                                notice = self.fetch_notice_detail(session, summary)
+                                notice_id, inserted = insert_notice_if_absent(connection, notice)
+                                if not inserted:
+                                    logging.debug(
+                                        "중복 공지 저장 건너뜀: notice_type=%s, notice_id=%s, origin_notice_id=%s",
+                                        self.board.key,
+                                        notice_id,
+                                        summary.origin_notice_id,
+                                    )
+                                    continue
+
+                                stats.notices_inserted += 1
+                                existing_notice_summaries[notice.origin_notice_id] = {
+                                    "id": notice_id,
+                                    "title": notice.title,
+                                    "author": notice.author,
+                                    "post_date": notice.post_date,
+                                    "is_hot": notice.is_hot,
+                                }
+                                logging.info(
+                                    "신규 공지 저장 완료: notice_type=%s, notice_id=%s, origin_notice_id=%s, attachments=%s, post_date=%s",
+                                    notice.notice_type,
+                                    notice_id,
+                                    notice.origin_notice_id,
+                                    len(notice.attachments),
+                                    notice.post_date,
+                                )
+                            else:
+                                notice = self.fetch_notice_detail(session, summary)
+                                notice_id, sync_status = sync_notice(connection, notice)
+                                if sync_status == "updated":
+                                    stats.notices_updated += 1
+                                    existing_notice_summaries[notice.origin_notice_id] = {
+                                        "id": notice_id,
+                                        "title": notice.title,
+                                        "author": notice.author,
+                                        "post_date": notice.post_date,
+                                        "is_hot": notice.is_hot,
+                                    }
+                                    logging.info(
+                                        "기존 공지 갱신 완료: notice_type=%s, notice_id=%s, origin_notice_id=%s, attachments=%s, post_date=%s",
+                                        notice.notice_type,
+                                        notice_id,
+                                        notice.origin_notice_id,
+                                        len(notice.attachments),
+                                        notice.post_date,
+                                    )
+                                else:
+                                    logging.debug(
+                                        "기존 공지 변경 없음: notice_type=%s, notice_id=%s, origin_notice_id=%s",
+                                        self.board.key,
+                                        notice_id,
+                                        summary.origin_notice_id,
+                                    )
                         except Exception as exc:
                             stats.notices_failed += 1
                             logging.exception(
@@ -198,7 +268,7 @@ class HanseoNoticeCrawler:
                             )
                             continue
 
-                stats.notices_deleted = delete_expired_notices(connection)
-                logging.info("%s 2년 초과 데이터 삭제 건수: %s", self.board.name, stats.notices_deleted)
+                stats.notices_deleted = delete_expired_notices(connection, self.board.key)
+                logging.info("%s 1년 초과 데이터 삭제 건수: %s", self.board.name, stats.notices_deleted)
 
         return stats

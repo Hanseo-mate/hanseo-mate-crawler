@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS notices (
     title VARCHAR(500) NOT NULL,
     source_url VARCHAR(1024) NOT NULL,
     content_html LONGTEXT NOT NULL,
+    change_summary TEXT NULL,
     author VARCHAR(100) NOT NULL,
     post_date DATE NOT NULL,
     is_hot BOOLEAN NOT NULL DEFAULT FALSE,
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS notices (
 | `title` | `VARCHAR(500)` | 공지 제목 |
 | `source_url` | `VARCHAR(1024)` | 원본 공지 상세 URL |
 | `content_html` | `LONGTEXT` | 공지 본문 HTML |
+| `change_summary` | `TEXT` | 기존 공지가 수정된 경우 변경 요약. 신규 공지는 `NULL` 가능 |
 | `author` | `VARCHAR(100)` | 작성자 |
 | `post_date` | `DATE` | 게시일 |
 | `is_hot` | `BOOLEAN` | HOT 공지 여부 |
@@ -105,35 +107,54 @@ CREATE TABLE IF NOT EXISTS notice_files (
 
 ## Data Behavior
 
-### Upsert Rules
+### Sync Rules
 
-Python 크롤러는 `notices`에 대해 upsert 방식으로 동작합니다.
+Python 크롤러는 `notices`에 대해 신규 공지는 `INSERT`, 기존 공지는 변경이 있을 때만 `UPDATE` 합니다.
 
 기준 키:
 
 - `(notice_type, origin_notice_id)`
 
-갱신되는 컬럼:
+동작 규칙:
 
-- `title`
-- `source_url`
-- `content_html`
-- `author`
-- `post_date`
-- `is_hot`
+- 목록 페이지에서 `(notice_type, origin_notice_id)` 기준으로 기존 공지를 먼저 조회합니다.
+- 기존 공지는 목록 메타데이터(`title`, `author`, `post_date`, `is_hot`)를 먼저 비교합니다.
+- 목록 메타데이터가 동일하면 상세 크롤링과 DB 쓰기를 모두 건너뜁니다.
+- 목록 메타데이터가 달라진 기존 공지만 상세 페이지를 다시 조회하고, 실제 본문/첨부 포함 변경분이 있을 때만 `UPDATE` 합니다.
+- 기존 공지 update가 발생하면 `change_summary` 필드에 변경 이유를 별도로 기록할 수 있습니다. 예: `HOT 해제`, `제목 변경`, `본문/첨부 변경`
+- 신규 공지만 상세 페이지를 조회한 뒤 `INSERT` 합니다.
+- 동시 실행 등으로 선조회 이후 중복이 생겨도 DB 유니크 키로 한 번 더 막고, 중복 충돌 시 추가 쓰기 없이 종료합니다.
 
-첨부파일은 공지별로 기존 데이터를 삭제한 뒤 다시 insert 합니다.
+첨부파일은 신규 공지 insert 시 저장하고, 기존 공지 update가 실제로 필요할 때만 교체합니다.
+
+`change_summary` 예시:
+
+- `HOT 해제`
+- `제목 변경`
+- `작성일 변경`
+- `본문 변경`
+- `첨부파일 변경`
+- `제목 변경, 본문 변경`
 
 ### Expired Data Deletion
 
-크롤링 실행 마지막 단계에서 아래 조건의 데이터가 삭제됩니다.
+크롤링 실행 마지막 단계에서 작성일(`post_date`) 기준 1년이 지난 데이터만 삭제됩니다.
+
+외래키 제약 오류를 피하기 위해 `notice_files`를 먼저 삭제하고, 이후 `notices`를 삭제합니다. 두 쿼리는 하나의 트랜잭션으로 묶어 실행합니다.
+
+```sql
+DELETE notice_files
+FROM notice_files
+INNER JOIN notices ON notices.id = notice_files.notice_id
+WHERE notices.notice_type = ?
+  AND notices.post_date < DATE_SUB(CURDATE(), INTERVAL 1 YEAR);
+```
 
 ```sql
 DELETE FROM notices
-WHERE post_date <= DATE_SUB(CURDATE(), INTERVAL 2 YEAR);
+WHERE notice_type = ?
+  AND post_date < DATE_SUB(CURDATE(), INTERVAL 1 YEAR);
 ```
-
-`notice_files`는 FK `ON DELETE CASCADE`로 함께 삭제됩니다.
 
 ## Image Processing Rules
 
@@ -169,6 +190,7 @@ SELECT
     origin_notice_id,
     title,
     source_url,
+  change_summary,
     author,
     post_date,
     is_hot
@@ -188,6 +210,7 @@ SELECT
     title,
     source_url,
     content_html,
+  change_summary,
     author,
     post_date,
     is_hot
@@ -291,13 +314,15 @@ http://34.64.250.12:8000
 {
   "academic": {
     "pages_processed": 50,
-    "notices_upserted": 734,
+    "notices_inserted": 734,
+    "notices_updated": 12,
     "notices_failed": 3,
     "notices_deleted": 18
   },
   "general": {
     "pages_processed": 50,
-    "notices_upserted": 680,
+    "notices_inserted": 680,
+    "notices_updated": 4,
     "notices_failed": 0,
     "notices_deleted": 18
   }
@@ -353,7 +378,8 @@ http://34.64.250.12:8000
   "results": {
     "academic": {
       "pages_processed": 50,
-      "notices_upserted": 734,
+      "notices_inserted": 734,
+      "notices_updated": 12,
       "notices_failed": 3,
       "notices_deleted": 18
     }
@@ -456,6 +482,7 @@ Java 엔티티/DTO 권장 필드명:
 - `title`
 - `sourceUrl`
 - `contentHtml`
+- `changeSummary`
 - `author`
 - `postDate`
 - `hot`

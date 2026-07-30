@@ -79,11 +79,12 @@ class CrawlService:
                     self._state.results[crawler.board.key] = asdict(stats)
 
                 logging.info(
-                    "크롤러 완료: run_id=%s, notice_type=%s, pages_processed=%s, notices_upserted=%s, notices_failed=%s, notices_deleted=%s",
+                    "크롤러 완료: run_id=%s, notice_type=%s, pages_processed=%s, notices_inserted=%s, notices_updated=%s, notices_failed=%s, notices_deleted=%s",
                     run_id,
                     crawler.board.key,
                     stats.pages_processed,
-                    stats.notices_upserted,
+                    stats.notices_inserted,
+                    stats.notices_updated,
                     stats.notices_failed,
                     stats.notices_deleted,
                 )
