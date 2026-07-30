@@ -8,6 +8,7 @@ from ..database import (
     ensure_schema,
     get_db_connection,
     get_existing_notice_summaries,
+    get_retention_cutoff_date,
     insert_notice_if_absent,
     sync_notice,
 )
@@ -30,6 +31,10 @@ from ..models import BoardDefinition, CrawlStats, NoticeRecord, NoticeSummary
 class HanseoNoticeCrawler:
     def __init__(self, board: BoardDefinition) -> None:
         self.board = board
+
+    @staticmethod
+    def should_collect_notice(summary: NoticeSummary, retention_cutoff_date) -> bool:
+        return summary.is_hot or summary.post_date >= retention_cutoff_date
 
     def build_list_page_url(self, page_num: int) -> str:
         return (
@@ -165,6 +170,7 @@ class HanseoNoticeCrawler:
 
     def crawl_and_sync_notices(self) -> CrawlStats:
         stats = CrawlStats()
+        retention_cutoff_date = get_retention_cutoff_date()
 
         with create_session() as session:
             with get_db_connection() as connection:
@@ -176,13 +182,24 @@ class HanseoNoticeCrawler:
 
                     try:
                         list_document = fetch_document(session, page_url)
-                        notices = self.parse_list_page(list_document.soup, page_num)
+                        parsed_notices = self.parse_list_page(list_document.soup, page_num)
+                        notices = [
+                            summary
+                            for summary in parsed_notices
+                            if self.should_collect_notice(summary, retention_cutoff_date)
+                        ]
                         existing_notice_summaries = get_existing_notice_summaries(
                             connection,
                             self.board.key,
                             [summary.origin_notice_id for summary in notices],
                         )
                         stats.pages_processed += 1
+                        if not notices:
+                            logging.debug(
+                                "%s 페이지 %s: 컷오프 이전 비HOT 공지만 있어 상세 크롤링을 건너뜀",
+                                self.board.name,
+                                page_num,
+                            )
                     except Exception as exc:
                         logging.exception("%s 페이지 %s 처리 실패: %s", self.board.name, page_num, exc)
                         continue

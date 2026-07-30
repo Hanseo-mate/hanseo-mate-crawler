@@ -1,3 +1,5 @@
+from datetime import date
+
 import pymysql
 
 from .config import DB_CONFIG
@@ -5,6 +7,14 @@ from .models import NoticeRecord
 
 
 RETENTION_PERIOD_YEARS = 1
+
+
+def get_retention_cutoff_date(reference_date: date | None = None) -> date:
+    reference_date = reference_date or date.today()
+    try:
+        return reference_date.replace(year=reference_date.year - RETENTION_PERIOD_YEARS)
+    except ValueError:
+        return reference_date.replace(year=reference_date.year - RETENTION_PERIOD_YEARS, month=2, day=28)
 
 
 CREATE_NOTICES_TABLE_SQL = """
@@ -130,12 +140,14 @@ DELETE notice_files
 FROM notice_files
 INNER JOIN notices ON notices.id = notice_files.notice_id
 WHERE notices.notice_type = %s
+    AND notices.is_hot = FALSE
     AND notices.post_date < DATE_SUB(CURDATE(), INTERVAL %s YEAR);
 """
 
 DELETE_EXPIRED_NOTICES_SQL = """
 DELETE FROM notices
 WHERE notice_type = %s
+    AND is_hot = FALSE
     AND post_date < DATE_SUB(CURDATE(), INTERVAL %s YEAR);
 """
 

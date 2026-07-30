@@ -118,6 +118,8 @@ Python 크롤러는 `notices`에 대해 신규 공지는 `INSERT`, 기존 공지
 동작 규칙:
 
 - 목록 페이지에서 `(notice_type, origin_notice_id)` 기준으로 기존 공지를 먼저 조회합니다.
+- 목록 페이지에서 먼저 날짜 컷오프를 적용합니다. 예를 들어 실행일이 `2026-07-30`이면 `2025-07-30` 이전 공지는 수집 대상에서 제외합니다.
+- 단, `is_hot = 1` 인 공지는 날짜가 1년을 넘어도 예외적으로 계속 수집 대상에 포함합니다.
 - 기존 공지는 목록 메타데이터(`title`, `author`, `post_date`, `is_hot`)를 먼저 비교합니다.
 - 목록 메타데이터가 동일하면 상세 크롤링과 DB 쓰기를 모두 건너뜁니다.
 - 목록 메타데이터가 달라진 기존 공지만 상세 페이지를 다시 조회하고, 실제 본문/첨부 포함 변경분이 있을 때만 `UPDATE` 합니다.
@@ -138,7 +140,9 @@ Python 크롤러는 `notices`에 대해 신규 공지는 `INSERT`, 기존 공지
 
 ### Expired Data Deletion
 
-크롤링 실행 마지막 단계에서 작성일(`post_date`) 기준 1년이 지난 데이터만 삭제됩니다.
+크롤링 실행 마지막 단계에서 작성일(`post_date`) 기준 1년이 지난 비HOT 데이터만 삭제됩니다.
+
+예를 들어 실행일이 `2026-07-30`이면 `2025-07-30` 이전이면서 `is_hot = 0` 인 공지가 삭제 대상입니다.
 
 외래키 제약 오류를 피하기 위해 `notice_files`를 먼저 삭제하고, 이후 `notices`를 삭제합니다. 두 쿼리는 하나의 트랜잭션으로 묶어 실행합니다.
 
@@ -147,12 +151,14 @@ DELETE notice_files
 FROM notice_files
 INNER JOIN notices ON notices.id = notice_files.notice_id
 WHERE notices.notice_type = ?
+  AND notices.is_hot = FALSE
   AND notices.post_date < DATE_SUB(CURDATE(), INTERVAL 1 YEAR);
 ```
 
 ```sql
 DELETE FROM notices
 WHERE notice_type = ?
+  AND is_hot = FALSE
   AND post_date < DATE_SUB(CURDATE(), INTERVAL 1 YEAR);
 ```
 
