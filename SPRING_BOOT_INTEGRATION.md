@@ -32,6 +32,17 @@
 | `scholarship` | 장학공지 | `301` | `040104` |
 | `graduate` | 대학원공지 | `302` | `040105` |
 
+## Restaurant Types
+
+식단 크롤러 요청의 `restaurant_type` 값은 아래 enum 중 하나입니다.
+
+| restaurant_type | 의미 |
+| --- | --- |
+| `MAIN_STUDENT` | 본교 학생식당 |
+| `MAIN_STAFF` | 본교 교직원식당 |
+| `TAEAN_STUDENT` | 태안 학생식당 |
+| `TAEAN_STAFF` | 태안 교직원식당 |
+
 ## Database Schema
 
 ### 1. `notices`
@@ -105,6 +116,79 @@ CREATE TABLE IF NOT EXISTS notice_files (
 | `file_name` | `VARCHAR(255)` | 첨부파일 이름 |
 | `file_url` | `VARCHAR(512)` | 한서대학교 원본 첨부파일 URL |
 
+### 3. `daily_menus`
+
+식당/날짜 단위 식단 헤더를 저장하는 테이블입니다.
+
+```sql
+CREATE TABLE IF NOT EXISTS daily_menus (
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  restaurant_type ENUM('MAIN_STUDENT', 'MAIN_STAFF', 'TAEAN_STUDENT', 'TAEAN_STAFF') NOT NULL,
+  menu_date DATE NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+컬럼 설명:
+
+| 컬럼명 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | `INT` | 내부 PK |
+| `restaurant_type` | `ENUM` | 식당 구분 |
+| `menu_date` | `DATE` | 식단 기준 날짜 |
+
+### 4. `meal_sections`
+
+한 날짜의 점심/저녁 및 코너 구분을 저장하는 테이블입니다.
+
+```sql
+CREATE TABLE IF NOT EXISTS meal_sections (
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  daily_menu_id INTEGER NOT NULL,
+  meal_time ENUM('LUNCH', 'DINNER') NOT NULL,
+  menu_category ENUM('KOREAN', 'SPECIAL', 'NORMAL') NOT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_meal_sections_daily_menu_id
+    FOREIGN KEY (daily_menu_id) REFERENCES daily_menus (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+컬럼 설명:
+
+| 컬럼명 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | `INT` | 내부 PK |
+| `daily_menu_id` | `INT` | `daily_menus.id` FK |
+| `meal_time` | `ENUM` | 점심 또는 저녁 |
+| `menu_category` | `ENUM` | 한식/일품/일반 코너 구분 |
+
+### 5. `dishes`
+
+실제 반찬 목록을 저장하는 테이블입니다.
+
+```sql
+CREATE TABLE IF NOT EXISTS dishes (
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  meal_section_id INTEGER NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  is_main_dish BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_dishes_meal_section_id
+    FOREIGN KEY (meal_section_id) REFERENCES meal_sections (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+컬럼 설명:
+
+| 컬럼명 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | `INT` | 내부 PK |
+| `meal_section_id` | `INT` | `meal_sections.id` FK |
+| `name` | `VARCHAR(255)` | 반찬 이름 |
+| `is_main_dish` | `BOOLEAN` | 메인 반찬 여부 |
+
 ## Data Behavior
 
 ### Sync Rules
@@ -161,6 +245,29 @@ WHERE notice_type = ?
   AND is_hot = FALSE
   AND post_date < DATE_SUB(CURDATE(), INTERVAL 1 YEAR);
 ```
+
+### Cafeteria Sync Rules
+
+식단 크롤러는 실행 시 요청받은 `restaurant_type`과 같은 주차의 `menu_date` 데이터를 다시 적재합니다.
+
+동작 규칙:
+
+- Python API는 전달받은 `url`에서 HTML을 가져옵니다.
+- `div.fd_info p.txt`에서 기준 날짜를 파싱한 뒤 해당 주의 월요일을 계산합니다.
+- `div.fd_table table tbody tr`를 월요일부터 금요일까지 순회하며 `menu_date`를 계산합니다.
+- 같은 `restaurant_type`과 같은 날짜 범위의 기존 `daily_menus`는 먼저 삭제합니다.
+- 이후 새 `daily_menus`, `meal_sections`, `dishes`를 다시 저장합니다.
+- 상위 `daily_menus` 삭제 시 하위 `meal_sections`, `dishes`는 cascade로 함께 삭제됩니다.
+- 식단 조회 API는 Python에 두지 않고 Spring Boot가 MySQL을 직접 조회하는 구조를 유지합니다.
+
+파싱 규칙:
+
+- `td.get_text(separator='\n', strip=True)`로 `<br>` 줄바꿈을 보존합니다.
+- 점심 텍스트에 `-------------`가 있으면 앞은 `KOREAN`, 뒤는 `SPECIAL`로 분리합니다.
+- 점심에 점선이 없으면 `NORMAL` 단일 코너로 저장합니다.
+- 저녁은 항상 `NORMAL` 코너로 저장합니다.
+- `(한식)`, `(일품)`, `(금요일 한식만 운영)` 같은 괄호 안내 문구는 저장하지 않습니다.
+- 메뉴명 끝의 `*`, `**`는 메인 반찬 표기로 해석하며, DB에는 별표를 제거한 이름과 `is_main_dish = true`로 저장합니다.
 
 ## Image Processing Rules
 
@@ -276,6 +383,12 @@ http://34.64.250.12:8000
     "general",
     "scholarship",
     "graduate"
+  ],
+  "available_restaurant_types": [
+    "MAIN_STUDENT",
+    "MAIN_STAFF",
+    "TAEAN_STUDENT",
+    "TAEAN_STAFF"
   ]
 }
 ```
@@ -409,6 +522,87 @@ http://34.64.250.12:8000
 }
 ```
 
+### 4. Cafeteria Crawl Status
+
+- Method: `GET`
+- Path: `/cafeteria-crawl/status`
+
+응답 예시:
+
+```json
+{
+  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
+  "status": "running",
+  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
+  "requested_restaurant_type": "MAIN_STUDENT",
+  "started_at": "2026-08-09T12:34:56.000000+00:00",
+  "finished_at": null,
+  "saved_daily_menus": 0,
+  "error": null
+}
+```
+
+`status` 값 의미는 공지 크롤링과 동일합니다.
+
+### 5. Trigger Cafeteria Crawl
+
+- Method: `POST`
+- Path: `/cafeteria-crawl/run`
+
+요청 바디:
+
+```json
+{
+  "url": "https://www.hanseo.ac.kr/food/example.do",
+  "restaurant_type": "MAIN_STUDENT",
+  "mode": "background"
+}
+```
+
+필드 설명:
+
+| 필드 | 타입 | 필수 여부 | 설명 |
+| --- | --- | --- | --- |
+| `url` | `string` | 필수 | 식단 HTML을 가져올 대상 URL |
+| `restaurant_type` | `MAIN_STUDENT \| MAIN_STAFF \| TAEAN_STUDENT \| TAEAN_STAFF` | 필수 | 저장 대상 식당 종류 |
+| `mode` | `background \| sync` | 선택 | `background`는 즉시 반환, `sync`는 크롤링 완료 후 반환 |
+
+`mode=background` 응답 예시:
+
+```json
+{
+  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
+  "status": "running",
+  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
+  "requested_restaurant_type": "MAIN_STUDENT",
+  "started_at": "2026-08-09T12:34:56.000000+00:00",
+  "finished_at": null,
+  "saved_daily_menus": 0,
+  "error": null
+}
+```
+
+`mode=sync` 응답 예시:
+
+```json
+{
+  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
+  "status": "completed",
+  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
+  "requested_restaurant_type": "MAIN_STUDENT",
+  "started_at": "2026-08-09T12:34:56.000000+00:00",
+  "finished_at": "2026-08-09T12:35:01.000000+00:00",
+  "saved_daily_menus": 5,
+  "error": null
+}
+```
+
+오류 응답:
+
+| HTTP Status | 상황 |
+| --- | --- |
+| `409` | 이미 다른 식단 크롤링이 실행 중 |
+
 ## How Spring Boot Should Use The API
 
 권장 사용 방식:
@@ -416,21 +610,26 @@ http://34.64.250.12:8000
 1. 운영 배치 또는 관리자 기능에서 `POST /crawl/run` 호출
 2. 비동기 실행을 원하면 `mode=background` 사용
 3. 이후 `GET /crawl/status` 폴링으로 상태 확인
-4. 실제 공지 데이터 조회는 Spring Boot가 MySQL에서 직접 조회
+4. 식단 수집은 `POST /cafeteria-crawl/run` 호출
+5. 이후 `GET /cafeteria-crawl/status` 폴링으로 상태 확인
+6. 실제 공지/식단 데이터 조회는 Spring Boot가 MySQL에서 직접 조회
 
 Spring Boot에서 Python API를 호출하는 용도:
 
 - 관리자 수동 수집 버튼
 - 스케줄 실행 트리거
 - 마지막 수집 상태 모니터링
+- 식단 크롤링 수동 실행
+- 식단 마지막 수집 상태 모니터링
 
 Spring Boot에서 Python API를 호출하지 않는 용도:
 
 - 공지 목록 조회
 - 공지 상세 조회
 - 첨부파일 목록 조회
+- 식단 조회
 
-위 3가지는 전부 MySQL 직접 조회가 맞습니다.
+위 항목들은 전부 MySQL 직접 조회가 맞습니다.
 
 ## Example cURL
 
@@ -460,6 +659,20 @@ curl -X POST http://34.64.250.12:8000/crawl/run \
 
 ```bash
 curl http://34.64.250.12:8000/crawl/status
+```
+
+### 식단 크롤링 비동기 실행
+
+```bash
+curl -X POST http://34.64.250.12:8000/cafeteria-crawl/run \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://www.hanseo.ac.kr/food/example.do","restaurant_type":"MAIN_STUDENT","mode":"background"}'
+```
+
+### 식단 상태 확인
+
+```bash
+curl http://34.64.250.12:8000/cafeteria-crawl/status
 ```
 
 ## Python API Run Command
@@ -504,7 +717,8 @@ Java 엔티티/DTO 권장 필드명:
 ## Final Notes
 
 - Python API는 크롤링 실행 제어 전용입니다.
-- Spring Boot는 조회 전용 API를 자체적으로 구현하는 방향이 맞습니다.
+- Spring Boot는 공지/식단 조회 API를 자체적으로 구현하는 방향이 맞습니다.
 - `content_html`은 이미 렌더 가능한 HTML이므로, Spring Boot에서는 그대로 내려주되 XSS 정책은 서비스 정책에 맞게 검토해야 합니다.
 - 이미지 URL은 `http://34.64.250.12/images/...` 형식으로 저장됩니다.
 - 원본 공지 링크는 `source_url` 컬럼에 저장됩니다.
+- 식단 데이터는 `daily_menus` -> `meal_sections` -> `dishes` 구조로 저장됩니다.

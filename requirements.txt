@@ -1,6 +1,7 @@
 requests
 beautifulsoup4
 pymysql
+sqlalchemy
 html5lib
 fastapi
 uvicorn

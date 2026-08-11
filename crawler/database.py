@@ -1,9 +1,12 @@
 from datetime import date
 
 import pymysql
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from .config import DB_CONFIG
-from .models import NoticeRecord
+from .models import Base, NoticeRecord
 
 
 RETENTION_PERIOD_YEARS = 1
@@ -154,6 +157,39 @@ WHERE notice_type = %s
 
 def get_db_connection() -> pymysql.connections.Connection:
     return pymysql.connect(**DB_CONFIG)
+
+
+def _build_sqlalchemy_database_url() -> str:
+    return (
+        f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}"
+        f"@{DB_CONFIG['host']}/{DB_CONFIG['database']}?charset={DB_CONFIG['charset']}"
+    )
+
+
+SQLALCHEMY_ENGINE = create_engine(
+    _build_sqlalchemy_database_url(),
+    future=True,
+    pool_pre_ping=True,
+)
+
+SQLALCHEMY_SESSION_FACTORY = sessionmaker(
+    bind=SQLALCHEMY_ENGINE,
+    autoflush=False,
+    autocommit=False,
+    future=True,
+)
+
+
+def get_sqlalchemy_engine() -> Engine:
+    return SQLALCHEMY_ENGINE
+
+
+def get_db_session() -> Session:
+    return SQLALCHEMY_SESSION_FACTORY()
+
+
+def ensure_cafeteria_schema() -> None:
+    Base.metadata.create_all(bind=SQLALCHEMY_ENGINE)
 
 
 def _column_exists(cursor: pymysql.cursors.Cursor, table_name: str, column_name: str) -> bool:
