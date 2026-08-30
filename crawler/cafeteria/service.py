@@ -4,6 +4,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 from sqlalchemy.orm import Session, selectinload
@@ -85,11 +86,22 @@ def _menu_content(menus: list[DailyMenu]) -> tuple:
     )
 
 
+def _validate_url(url: str) -> None:
+    """URL이 유효한 http/https 형식인지 검증합니다."""
+    try:
+        parsed = urlparse(url)
+    except Exception as exc:
+        raise ValueError(f"올바르지 않은 URL입니다: {url}") from exc
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError(f"올바르지 않은 URL입니다 (http/https 형식이어야 합니다): {url}")
+
+
 def crawl_and_save_cafeteria(
     url: str,
     rest_type: RestaurantType,
     db_session: Session,
 ) -> CafeteriaSyncResult:
+    _validate_url(url)
     response = requests.get(url, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     response.encoding = response.apparent_encoding or response.encoding
