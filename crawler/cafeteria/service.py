@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import requests
 from sqlalchemy.orm import Session, selectinload
 
-from ..config import REQUEST_TIMEOUT
+from ..config import CAFETERIA_URLS, REQUEST_TIMEOUT
 from ..database import ensure_cafeteria_schema, get_db_session
 from ..models import DailyMenu, RestaurantType
 from .parser import parse_cafeteria_menu
@@ -44,20 +44,31 @@ def serialize_daily_menus(menus: list[DailyMenu]) -> list[dict[str, Any]]:
 
 
 @dataclass
-class CafeteriaRunState:
-    run_id: str | None = None
-    status: str = "idle"
-    requested_url: str | None = None
-    requested_restaurant_type: str | None = None
-    started_at: str | None = None
-    finished_at: str | None = None
+class RestaurantResult:
+    """식당 하나의 크롤링 결과"""
+    status: str = "pending"          # pending | running | completed | unchanged | failed
+    url: str | None = None
     saved_daily_menus: int = 0
     updated: bool | None = None
+    error: str | None = None
+    menus: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class CafeteriaRunState:
+    run_id: str | None = None
+    status: str = "idle"             # idle | running | completed | partial_failed | failed
+    started_at: str | None = None
+    finished_at: str | None = None
     retry_count: int = 0
     max_retry_count: int = MAX_RETRY_COUNT
     next_retry_at: str | None = None
-    menus: list[dict[str, Any]] = field(default_factory=list)
-    error: str | None = None
+    results: dict[str, RestaurantResult] = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        # results 안의 RestaurantResult도 dict로 직렬화됨 (asdict가 자동 처리)
+        return d
 
 
 @dataclass(frozen=True)
@@ -141,15 +152,58 @@ class CafeteriaCrawlService:
 
     def get_state(self) -> dict:
         with self._lock:
-            return asdict(self._state)
+            return self._state.to_dict()
 
-    def run_crawler(
+    # ------------------------------------------------------------------ #
+    #  내부: 식당 하나 크롤링                                              #
+    # ------------------------------------------------------------------ #
+
+    def _crawl_one(self, url: str, rest_type: RestaurantType) -> None:
+        """식당 하나를 크롤링하고 self._state.results[rest_type.value]를 업데이트합니다."""
+        key = rest_type.value
+        with self._lock:
+            self._state.results[key].status = "running"
+
+        logging.info("식단 크롤링 시작: restaurant_type=%s, url=%s", key, url)
+        try:
+            ensure_cafeteria_schema()
+            with get_db_session() as db_session:
+                result = crawl_and_save_cafeteria(url, rest_type, db_session)
+
+            with self._lock:
+                r = self._state.results[key]
+                r.status = "completed" if result.updated else "unchanged"
+                r.saved_daily_menus = len(result.menus) if result.updated else 0
+                r.updated = result.updated
+                r.menus = serialize_daily_menus(result.menus)
+
+        except Exception as exc:
+            logging.exception("식단 크롤링 실패: restaurant_type=%s, error=%s", key, exc)
+            with self._lock:
+                r = self._state.results[key]
+                r.status = "failed"
+                r.error = str(exc)
+
+    # ------------------------------------------------------------------ #
+    #  공개 API                                                            #
+    # ------------------------------------------------------------------ #
+
+    def run_crawlers(
         self,
-        url: str,
-        rest_type: RestaurantType,
+        targets: list[tuple[str, RestaurantType]] | None = None,
         retry_count: int = 0,
         _preclaimed: bool = False,
-    ) -> list[DailyMenu]:
+    ) -> None:
+        """
+        targets: [(url, rest_type), ...] 리스트.
+                 None 이면 CAFETERIA_URLS에 정의된 전체 식당을 대상으로 합니다.
+        """
+        if targets is None:
+            targets = [
+                (url, RestaurantType(key))
+                for key, url in CAFETERIA_URLS.items()
+            ]
+
         run_id = uuid.uuid4().hex
 
         with self._lock:
@@ -163,41 +217,61 @@ class CafeteriaCrawlService:
             self._state = CafeteriaRunState(
                 run_id=run_id,
                 status="running",
-                requested_url=url,
-                requested_restaurant_type=rest_type.value,
                 started_at=utc_now_iso(),
-                saved_daily_menus=0,
                 retry_count=retry_count,
-                error=None,
+                results={
+                    rest_type.value: RestaurantResult(url=url)
+                    for url, rest_type in targets
+                },
             )
 
-        logging.info("식단 크롤링 시작: run_id=%s, restaurant_type=%s, url=%s", run_id, rest_type.value, url)
+        # 순차 크롤링 (학교 서버 부하 방지)
+        for url, rest_type in targets:
+            self._crawl_one(url, rest_type)
 
-        try:
-            ensure_cafeteria_schema()
-            with get_db_session() as db_session:
-                result = crawl_and_save_cafeteria(url, rest_type, db_session)
+        with self._lock:
+            statuses = {r.status for r in self._state.results.values()}
+            if statuses == {"unchanged"}:
+                overall = "unchanged"
+            elif "failed" in statuses and statuses <= {"failed", "unchanged"}:
+                overall = "failed"
+            elif "failed" in statuses:
+                overall = "partial_failed"
+            else:
+                overall = "completed"
 
-            with self._lock:
-                self._state.status = "completed" if result.updated else "unchanged"
-                self._state.finished_at = utc_now_iso()
-                self._state.saved_daily_menus = len(result.menus) if result.updated else 0
-                self._state.updated = result.updated
-                self._state.menus = serialize_daily_menus(result.menus)
+            self._state.status = overall
+            self._state.finished_at = utc_now_iso()
 
-            if result.updated:
-                self._cancel_retry()
-            elif retry_count < MAX_RETRY_COUNT:
-                self._schedule_retry(url, rest_type, retry_count + 1)
+        any_updated = any(
+            r.updated for r in self._state.results.values() if r.updated is not None
+        )
+        all_failed = all(r.status == "failed" for r in self._state.results.values())
 
-            return result.menus
-        except Exception as exc:
-            logging.exception("식단 크롤링 실패: run_id=%s, error=%s", run_id, exc)
-            with self._lock:
-                self._state.status = "failed"
-                self._state.finished_at = utc_now_iso()
-                self._state.error = str(exc)
-            raise
+        if any_updated:
+            self._cancel_retry()
+        elif not all_failed and retry_count < MAX_RETRY_COUNT:
+            self._schedule_retry(targets, retry_count + 1)
+
+    def start_background_run(
+        self,
+        targets: list[tuple[str, RestaurantType]] | None = None,
+    ) -> dict:
+        with self._lock:
+            if self._state.status == "running" or self._background_starting:
+                raise RuntimeError("이미 식단 크롤링이 실행 중입니다.")
+            self._background_starting = True
+            self._state.status = "starting"
+
+        def run() -> None:
+            try:
+                self.run_crawlers(targets, _preclaimed=True)
+            except Exception:
+                logging.exception("백그라운드 식단 크롤링 실패")
+
+        thread = threading.Thread(target=run, name="cafeteria-crawler-runner", daemon=True)
+        thread.start()
+        return self.get_state()
 
     def _cancel_retry(self) -> None:
         with self._lock:
@@ -206,12 +280,16 @@ class CafeteriaCrawlService:
                 self._retry_timer = None
             self._state.next_retry_at = None
 
-    def _schedule_retry(self, url: str, rest_type: RestaurantType, retry_count: int) -> None:
+    def _schedule_retry(
+        self,
+        targets: list[tuple[str, RestaurantType]],
+        retry_count: int,
+    ) -> None:
         next_retry = datetime.now(timezone.utc) + RETRY_DELAY
 
         def retry() -> None:
             try:
-                self.run_crawler(url, rest_type, retry_count)
+                self.run_crawlers(targets, retry_count)
             except Exception:
                 logging.exception("식단 크롤링 재시도 실패: retry_count=%s", retry_count)
 
@@ -224,23 +302,6 @@ class CafeteriaCrawlService:
             self._retry_timer = timer
             self._state.next_retry_at = next_retry.isoformat()
         timer.start()
-
-    def start_background_run(self, url: str, rest_type: RestaurantType) -> dict:
-        with self._lock:
-            if self._state.status == "running" or self._background_starting:
-                raise RuntimeError("이미 식단 크롤링이 실행 중입니다.")
-            self._background_starting = True
-            self._state.status = "starting"
-
-        def run() -> None:
-            try:
-                self.run_crawler(url, rest_type, _preclaimed=True)
-            except Exception:
-                logging.exception("백그라운드 식단 크롤링 실패")
-
-        thread = threading.Thread(target=run, name="cafeteria-crawler-runner", daemon=True)
-        thread.start()
-        return self.get_state()
 
 
 cafeteria_crawl_service = CafeteriaCrawlService()

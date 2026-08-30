@@ -16,8 +16,10 @@ class CrawlTriggerRequest(BaseModel):
 
 
 class CafeteriaCrawlTriggerRequest(BaseModel):
-    url: str | None = Field(default=None, description="식단표 URL. 미입력 시 식당 타입별 기본 URL 사용")
-    restaurant_type: RestaurantType
+    restaurant_types: list[RestaurantType] | None = Field(
+        default=None,
+        description="크롤링할 식당 타입 목록. 생략 시 전체 식당 크롤링",
+    )
     mode: Literal["background", "sync"] = "background"
 
 
@@ -59,18 +61,29 @@ def cafeteria_crawl_status() -> dict:
 
 @app.post("/cafeteria-crawl/run")
 def trigger_cafeteria_crawl(request: CafeteriaCrawlTriggerRequest) -> dict:
-    url = request.url or CAFETERIA_URLS.get(request.restaurant_type.value)
-    if not url:
+    # 요청된 식당 타입에 대해 URL 매핑 구성
+    rest_types = request.restaurant_types or list(RestaurantType)
+    targets: list[tuple[str, RestaurantType]] = []
+    missing = []
+    for rt in rest_types:
+        url = CAFETERIA_URLS.get(rt.value)
+        if not url:
+            missing.append(rt.value)
+        else:
+            targets.append((url, rt))
+
+    if missing:
         raise HTTPException(
             status_code=400,
-            detail=f"URL이 제공되지 않았고 {request.restaurant_type.value}에 대한 기본 URL도 없습니다.",
+            detail=f"다음 식당 타입에 대한 URL이 설정되지 않았습니다: {', '.join(missing)}",
         )
+
     try:
         if request.mode == "sync":
-            cafeteria_crawl_service.run_crawler(url, request.restaurant_type)
+            cafeteria_crawl_service.run_crawlers(targets)
             return cafeteria_crawl_service.get_state()
 
-        return cafeteria_crawl_service.start_background_run(url, request.restaurant_type)
+        return cafeteria_crawl_service.start_background_run(targets)
     except (ValueError, InvalidURL) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
