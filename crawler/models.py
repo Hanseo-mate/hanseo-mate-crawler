@@ -3,7 +3,7 @@ from datetime import date
 from enum import Enum
 
 from bs4 import BeautifulSoup
-from sqlalchemy import Boolean, Column, Date, Enum as SqlEnum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, Enum as SqlEnum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 
 
@@ -15,12 +15,6 @@ class MealTime(str, Enum):
     DINNER = "DINNER"
 
 
-class MenuCategory(str, Enum):
-    KOREAN = "KOREAN"
-    SPECIAL = "SPECIAL"
-    NORMAL = "NORMAL"
-
-
 class RestaurantType(str, Enum):
     MAIN_STUDENT = "MAIN_STUDENT"
     MAIN_STAFF = "MAIN_STAFF"
@@ -30,6 +24,7 @@ class RestaurantType(str, Enum):
 
 class DailyMenu(Base):
     __tablename__ = "daily_menus"
+    __table_args__ = (UniqueConstraint("restaurant_type", "menu_date", name="uk_daily_menu_restaurant_date"),)
 
     id = Column(Integer, primary_key=True)
     restaurant_type = Column(SqlEnum(RestaurantType), nullable=False)
@@ -38,6 +33,7 @@ class DailyMenu(Base):
         "MealSection",
         back_populates="daily_menu",
         cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 
@@ -45,25 +41,13 @@ class MealSection(Base):
     __tablename__ = "meal_sections"
 
     id = Column(Integer, primary_key=True)
-    daily_menu_id = Column(Integer, ForeignKey("daily_menus.id"), nullable=False)
+    daily_menu_id = Column(Integer, ForeignKey("daily_menus.id", ondelete="CASCADE"), nullable=False)
     meal_time = Column(SqlEnum(MealTime), nullable=False)
-    menu_category = Column(SqlEnum(MenuCategory), nullable=False)
+    corner_name = Column(String(100), nullable=False)
+    price = Column(Integer, nullable=True)
+    dishes = Column(JSON, nullable=False)
+    raw_text = Column(Text, nullable=False)
     daily_menu = relationship("DailyMenu", back_populates="meal_sections")
-    dishes = relationship(
-        "Dish",
-        back_populates="meal_section",
-        cascade="all, delete-orphan",
-    )
-
-
-class Dish(Base):
-    __tablename__ = "dishes"
-
-    id = Column(Integer, primary_key=True)
-    meal_section_id = Column(Integer, ForeignKey("meal_sections.id"), nullable=False)
-    name = Column(String(255), nullable=False)
-    is_main_dish = Column(Boolean, nullable=False, default=False)
-    meal_section = relationship("MealSection", back_populates="dishes")
 
 
 @dataclass(frozen=True)

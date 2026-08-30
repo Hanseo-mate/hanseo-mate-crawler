@@ -125,7 +125,8 @@ CREATE TABLE IF NOT EXISTS daily_menus (
   id INTEGER NOT NULL AUTO_INCREMENT,
   restaurant_type ENUM('MAIN_STUDENT', 'MAIN_STAFF', 'TAEAN_STUDENT', 'TAEAN_STAFF') NOT NULL,
   menu_date DATE NOT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_daily_menu_restaurant_date (restaurant_type, menu_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -146,7 +147,10 @@ CREATE TABLE IF NOT EXISTS meal_sections (
   id INTEGER NOT NULL AUTO_INCREMENT,
   daily_menu_id INTEGER NOT NULL,
   meal_time ENUM('LUNCH', 'DINNER') NOT NULL,
-  menu_category ENUM('KOREAN', 'SPECIAL', 'NORMAL') NOT NULL,
+  corner_name VARCHAR(100) NOT NULL,
+  price INTEGER NULL,
+  dishes JSON NOT NULL,
+  raw_text TEXT NOT NULL,
   PRIMARY KEY (id),
   CONSTRAINT fk_meal_sections_daily_menu_id
     FOREIGN KEY (daily_menu_id) REFERENCES daily_menus (id)
@@ -161,33 +165,13 @@ CREATE TABLE IF NOT EXISTS meal_sections (
 | `id` | `INT` | 내부 PK |
 | `daily_menu_id` | `INT` | `daily_menus.id` FK |
 | `meal_time` | `ENUM` | 점심 또는 저녁 |
-| `menu_category` | `ENUM` | 한식/일품/일반 코너 구분 |
+| `corner_name` | `VARCHAR(100)` | `1코너`, `A코너`, `특식` 등 코너명 |
+| `price` | `INT NULL` | 원 단위 가격. 파싱 실패 시 `NULL` |
+| `dishes` | `JSON` | 반찬명 문자열 배열 |
+| `raw_text` | `TEXT` | 파싱 전 코너 텍스트. 앱 fallback 용도 |
 
-### 5. `dishes`
-
-실제 반찬 목록을 저장하는 테이블입니다.
-
-```sql
-CREATE TABLE IF NOT EXISTS dishes (
-  id INTEGER NOT NULL AUTO_INCREMENT,
-  meal_section_id INTEGER NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  is_main_dish BOOLEAN NOT NULL DEFAULT FALSE,
-  PRIMARY KEY (id),
-  CONSTRAINT fk_dishes_meal_section_id
-    FOREIGN KEY (meal_section_id) REFERENCES meal_sections (id)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-컬럼 설명:
-
-| 컬럼명 | 타입 | 설명 |
-| --- | --- | --- |
-| `id` | `INT` | 내부 PK |
-| `meal_section_id` | `INT` | `meal_sections.id` FK |
-| `name` | `VARCHAR(255)` | 반찬 이름 |
-| `is_main_dish` | `BOOLEAN` | 메인 반찬 여부 |
+기존 `dishes` 테이블은 사용하지 않습니다. Python 시작 시 레거시 테이블을 삭제하고 구형
+`meal_sections`를 새 구조로 한 번 재생성합니다.
 
 ## Data Behavior
 
@@ -248,26 +232,48 @@ WHERE notice_type = ?
 
 ### Cafeteria Sync Rules
 
-식단 크롤러는 실행 시 요청받은 `restaurant_type`과 같은 주차의 `menu_date` 데이터를 다시 적재합니다.
+식단 크롤러는 새 주차 내용이 기존 내용과 다를 때만 요청받은 `restaurant_type` 데이터를 교체합니다.
 
 동작 규칙:
 
 - Python API는 전달받은 `url`에서 HTML을 가져옵니다.
 - `div.fd_info p.txt`에서 기준 날짜를 파싱한 뒤 해당 주의 월요일을 계산합니다.
 - `div.fd_table table tbody tr`를 월요일부터 금요일까지 순회하며 `menu_date`를 계산합니다.
-- 같은 `restaurant_type`과 같은 날짜 범위의 기존 `daily_menus`는 먼저 삭제합니다.
-- 이후 새 `daily_menus`, `meal_sections`, `dishes`를 다시 저장합니다.
-- 상위 `daily_menus` 삭제 시 하위 `meal_sections`, `dishes`는 cascade로 함께 삭제됩니다.
+- 현재 주차의 날짜, 식당, 식사 시간, 코너명, 가격, 반찬 배열, 원문을 정규화해 완전 비교합니다.
+- 내용이 같으면 DB 쓰기를 중단하고 상태를 `unchanged`로 반환합니다.
+- 내용이 다르면 같은 `restaurant_type`의 과거 `daily_menus`를 모두 hard delete한 뒤 새 데이터를 저장합니다.
+- 상위 `daily_menus` 삭제 시 하위 `meal_sections`는 DB cascade로 함께 삭제됩니다.
+- 내용이 같으면 daemon timer가 2시간 뒤 재호출하며 최대 5회까지만 재시도합니다.
+- 재시도 timer는 호출 스레드를 점유하지 않으며 수동 실행이나 갱신 성공 시 취소됩니다.
 - 식단 조회 API는 Python에 두지 않고 Spring Boot가 MySQL을 직접 조회하는 구조를 유지합니다.
 
 파싱 규칙:
 
 - `td.get_text(separator='\n', strip=True)`로 `<br>` 줄바꿈을 보존합니다.
-- 점심 텍스트에 `-------------`가 있으면 앞은 `KOREAN`, 뒤는 `SPECIAL`로 분리합니다.
-- 점심에 점선이 없으면 `NORMAL` 단일 코너로 저장합니다.
-- 저녁은 항상 `NORMAL` 코너로 저장합니다.
+- 줄 전체가 하이픈 3개 이상인 구분선을 기준으로 점심/저녁 코너를 각각 분리합니다.
+- `1코너`, `A 코너`, `특식` 등 코너명을 감지하며 없으면 순서 기반 코너명을 사용합니다.
+- `5.5`, `5,500`, `5500` 가격은 모두 정수 `5500`으로 저장합니다.
 - `(한식)`, `(일품)`, `(금요일 한식만 운영)` 같은 괄호 안내 문구는 저장하지 않습니다.
-- 메뉴명 끝의 `*`, `**`는 메인 반찬 표기로 해석하며, DB에는 별표를 제거한 이름과 `is_main_dish = true`로 저장합니다.
+- 메뉴명 끝의 `*`, `**`는 제거하고 반찬명 문자열만 JSON 배열에 저장합니다.
+- 각 코너의 정제 전 텍스트는 `raw_text`에 함께 저장합니다.
+
+동기 실행의 상태 응답은 `menus`에 아래 camelCase 구조를 포함합니다.
+
+```json
+{
+  "menuDate": "2026-08-31",
+  "restaurantType": "MAIN_STUDENT",
+  "mealSections": [
+    {
+      "mealTime": "LUNCH",
+      "cornerName": "1코너",
+      "price": 5500,
+      "dishes": ["쌀밥", "불고기"],
+      "rawText": "1코너 (5.5)\n쌀밥\n불고기"
+    }
+  ]
+}
+```
 
 ## Image Processing Rules
 

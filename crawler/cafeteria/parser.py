@@ -1,13 +1,19 @@
 import re
 from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 
 from bs4 import BeautifulSoup
 
 from ..config import ACTIVE_HTML_PARSER
-from ..models import DailyMenu, Dish, MealSection, MealTime, MenuCategory, RestaurantType
+from ..models import DailyMenu, MealSection, MealTime, RestaurantType
 
 
 DATE_PATTERN = re.compile(r"(?:(?P<year>\d{4})[./-]\s*)?(?P<month>\d{1,2})[./-](?P<day>\d{1,2})")
+SECTION_SEPARATOR_PATTERN = re.compile(r"^\s*-{3,}\s*$", re.MULTILINE)
+CORNER_PATTERN = re.compile(r"(?P<corner>(?:\d+|[A-Za-z]|[가-힣]+)\s*코너|특식)", re.IGNORECASE)
+PRICE_PATTERN = re.compile(
+    r"(?<![\d.])(?:(?P<decimal>\d{1,2}\.\d{1,3})|(?P<integer>\d{1,3}(?:,\d{3})+|\d{4,6}))\s*(?:원)?(?!\d)"
+)
 
 
 def _extract_week_start_date(soup: BeautifulSoup) -> date:
@@ -29,37 +35,70 @@ def _extract_week_start_date(soup: BeautifulSoup) -> date:
     return parsed_date - timedelta(days=parsed_date.weekday())
 
 
-def _normalize_dishes(raw_text: str) -> list[Dish]:
-    dishes: list[Dish] = []
+def _parse_price(raw_text: str) -> int | None:
+    match = PRICE_PATTERN.search(raw_text)
+    if match is None:
+        return None
+
+    decimal_text = match.group("decimal")
+    if decimal_text is not None:
+        try:
+            return int(Decimal(decimal_text) * 1000)
+        except InvalidOperation:
+            return None
+
+    return int(match.group("integer").replace(",", ""))
+
+
+def _parse_corner_name(raw_text: str, fallback_name: str) -> str:
+    match = CORNER_PATTERN.search(raw_text)
+    if match is None:
+        return fallback_name
+    return re.sub(r"\s+", "", match.group("corner"))
+
+
+def _normalize_dishes(raw_text: str) -> list[str]:
+    dishes: list[str] = []
     for line in raw_text.split("\n"):
         item = line.strip()
         if not item:
             continue
         if item.startswith("("):
             continue
-        if item.startswith("---") or item.replace("-", "") == "":
+        if CORNER_PATTERN.search(item) or PRICE_PATTERN.search(item):
             continue
 
-        is_main_dish = item.endswith("*") or item.endswith("**")
         clean_name = item.replace("*", "").strip()
         if not clean_name:
             continue
 
-        dishes.append(Dish(name=clean_name, is_main_dish=is_main_dish))
+        dishes.append(clean_name)
 
     return dishes
 
 
-def _build_meal_section(meal_time: MealTime, menu_category: MenuCategory, raw_text: str) -> MealSection | None:
+def _build_meal_section(meal_time: MealTime, raw_text: str, fallback_name: str) -> MealSection | None:
     dishes = _normalize_dishes(raw_text)
     if not dishes:
         return None
 
     return MealSection(
         meal_time=meal_time,
-        menu_category=menu_category,
+        corner_name=_parse_corner_name(raw_text, fallback_name),
+        price=_parse_price(raw_text),
         dishes=dishes,
+        raw_text=raw_text,
     )
+
+
+def _parse_cell_sections(raw_text: str, meal_time: MealTime) -> list[MealSection]:
+    sections: list[MealSection] = []
+    parts = [part.strip() for part in SECTION_SEPARATOR_PATTERN.split(raw_text) if part.strip()]
+    for index, part in enumerate(parts, start=1):
+        section = _build_meal_section(meal_time, part, f"{index}코너")
+        if section is not None:
+            sections.append(section)
+    return sections
 
 
 def parse_cafeteria_menu(html: str, rest_type: RestaurantType) -> list[DailyMenu]:
@@ -77,26 +116,11 @@ def parse_cafeteria_menu(html: str, rest_type: RestaurantType) -> list[DailyMenu
 
         lunch_text = cells[1].get_text(separator="\n", strip=True)
         if lunch_text:
-            if "-------------" in lunch_text:
-                lunch_parts = [part.strip() for part in lunch_text.split("-------------", 1)]
-                korean_section = _build_meal_section(MealTime.LUNCH, MenuCategory.KOREAN, lunch_parts[0])
-                if korean_section is not None:
-                    daily_menu.meal_sections.append(korean_section)
-
-                special_part = lunch_parts[1] if len(lunch_parts) > 1 else ""
-                special_section = _build_meal_section(MealTime.LUNCH, MenuCategory.SPECIAL, special_part)
-                if special_section is not None:
-                    daily_menu.meal_sections.append(special_section)
-            else:
-                normal_lunch = _build_meal_section(MealTime.LUNCH, MenuCategory.NORMAL, lunch_text)
-                if normal_lunch is not None:
-                    daily_menu.meal_sections.append(normal_lunch)
+            daily_menu.meal_sections.extend(_parse_cell_sections(lunch_text, MealTime.LUNCH))
 
         dinner_text = cells[2].get_text(separator="\n", strip=True)
         if dinner_text:
-            dinner_section = _build_meal_section(MealTime.DINNER, MenuCategory.NORMAL, dinner_text)
-            if dinner_section is not None:
-                daily_menu.meal_sections.append(dinner_section)
+            daily_menu.meal_sections.extend(_parse_cell_sections(dinner_text, MealTime.DINNER))
 
         if daily_menu.meal_sections:
             menus.append(daily_menu)

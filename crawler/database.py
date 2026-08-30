@@ -1,7 +1,7 @@
 from datetime import date
 
 import pymysql
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -176,6 +176,7 @@ SQLALCHEMY_SESSION_FACTORY = sessionmaker(
     bind=SQLALCHEMY_ENGINE,
     autoflush=False,
     autocommit=False,
+    expire_on_commit=False,
     future=True,
 )
 
@@ -189,6 +190,29 @@ def get_db_session() -> Session:
 
 
 def ensure_cafeteria_schema() -> None:
+    inspector = inspect(SQLALCHEMY_ENGINE)
+    table_names = set(inspector.get_table_names())
+    meal_section_columns = (
+        {column["name"] for column in inspector.get_columns("meal_sections")}
+        if "meal_sections" in table_names
+        else set()
+    )
+    expected_columns = {
+        "id",
+        "daily_menu_id",
+        "meal_time",
+        "corner_name",
+        "price",
+        "dishes",
+        "raw_text",
+    }
+
+    with SQLALCHEMY_ENGINE.begin() as connection:
+        if "dishes" in table_names:
+            connection.execute(text("DROP TABLE dishes"))
+        if meal_section_columns and meal_section_columns != expected_columns:
+            connection.execute(text("DROP TABLE meal_sections"))
+
     Base.metadata.create_all(bind=SQLALCHEMY_ENGINE)
 
 
