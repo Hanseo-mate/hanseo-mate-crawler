@@ -8,13 +8,13 @@ HTML_PARSER = "html5lib"
 IMAGE_SAVE_DIRECTORY = "/home/hanseo-mate/images"
 IMAGE_BASE_URL = "http://34.64.250.12/images/"
 
-# 식당별 기본 식단표 URL (HTML select option value 기준)
-# value="1" 학생식당 / value="2" 교직원식당 / value="3" 태안-학생식당 / value="4" 태안-교직원식당
+# 식당별 고정 식단표 URL. food_area 값만 다르고 나머지 경로는 고정이다.
+# food_area=1 서산 학생식당 / 2 서산 교직원식당 / 3 태안 학생식당 / 4 태안 교직원식당
 CAFETERIA_URLS = {
-    "MAIN_STUDENT":  f"{BASE_URL}/food/foodView.do?food_area=1&s=hs&m=0504",
-    "MAIN_STAFF":    f"{BASE_URL}/food/foodView.do?food_area=2&s=hs&m=0504",
-    "TAEAN_STUDENT": f"{BASE_URL}/food/foodView.do?food_area=3&s=hs&m=0504",
-    "TAEAN_STAFF":   f"{BASE_URL}/food/foodView.do?food_area=4&s=hs&m=0504",
+    "MAIN_STUDENT":  f"{BASE_URL}/food/foodView.do?food_area=1",
+    "MAIN_STAFF":    f"{BASE_URL}/food/foodView.do?food_area=2",
+    "TAEAN_STUDENT": f"{BASE_URL}/food/foodView.do?food_area=3",
+    "TAEAN_STAFF":   f"{BASE_URL}/food/foodView.do?food_area=4",
 }
 
 DB_CONFIG = {
