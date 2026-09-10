@@ -33,6 +33,17 @@ class CafeteriaParserTest(unittest.TestCase):
         )
         self.assertEqual(sections[0].raw_text, "1코너 (5.5)\n쌀밥\n불고기")
 
+    def test_week_start_rolls_forward_when_reference_date_is_sunday(self) -> None:
+        # 태안 학생식당처럼 '기간' 시작일이 월요일 전날인 일요일로 잘못 표기된 경우를 재현한다.
+        html = (
+            '<div class="fd_info"><p class="txt">기간 2026/09/06 ~ 2026/09/11</p></div>'
+            '<div class="fd_table"><table><tbody><tr>'
+            "<td>월</td><td>쌀밥</td><td></td>"
+            "</tr></tbody></table></div>"
+        )
+        menus = parse_cafeteria_menu(html, RestaurantType.TAEAN_STUDENT)
+        self.assertEqual(menus[0].menu_date, date(2026, 9, 7))
+
 
 class CafeteriaSyncTest(unittest.TestCase):
     def setUp(self) -> None:

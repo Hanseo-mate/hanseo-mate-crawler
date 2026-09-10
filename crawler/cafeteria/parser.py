@@ -32,6 +32,10 @@ def _extract_week_start_date(soup: BeautifulSoup) -> date:
         int(match.group("month")),
         int(match.group("day")),
     )
+    if parsed_date.weekday() == 6:
+        # 일부 식당은 기간 시작일을 월요일 전날인 일요일로 잘못 표기한다(예: 태안 학생식당).
+        # weekday() 기준 역산은 이 경우 한 주 전 월요일로 되돌아가므로 다음날로 보정한다.
+        return parsed_date + timedelta(days=1)
     return parsed_date - timedelta(days=parsed_date.weekday())
 
 
