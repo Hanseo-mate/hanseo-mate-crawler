@@ -57,6 +57,10 @@ class CafeteriaSyncTest(unittest.TestCase):
         self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.response = Mock(text=HTML, apparent_encoding="utf-8", encoding="utf-8")
         self.response.raise_for_status.return_value = None
+        clock_patch = patch("crawler.cafeteria.service.korea_today", return_value=date(2026, 8, 31))
+        clock_patch.start()
+        self.addCleanup(clock_patch.stop)
+        self.addCleanup(self.engine.dispose)
 
     def test_replaces_restaurant_history_then_aborts_identical_update(self) -> None:
         with self.session_factory() as session:

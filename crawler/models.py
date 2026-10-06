@@ -3,7 +3,7 @@ from datetime import date
 from enum import Enum
 
 from bs4 import BeautifulSoup
-from sqlalchemy import Boolean, Column, Date, Enum as SqlEnum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, DateTime, Enum as SqlEnum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 
 
@@ -48,6 +48,21 @@ class MealSection(Base):
     dishes = Column(JSON, nullable=False)
     raw_text = Column(Text, nullable=False)
     daily_menu = relationship("DailyMenu", back_populates="meal_sections")
+
+
+class CafeteriaCrawlProgress(Base):
+    """식당별 마지막 시도와 성공 기록. 날짜는 KST, 시각은 UTC로 저장한다."""
+
+    __tablename__ = "cafeteria_crawl_progress"
+
+    restaurant_type = Column(String(40), primary_key=True)
+    business_date = Column(Date, nullable=False)
+    status = Column(String(20), nullable=False)
+    run_id = Column(String(32), nullable=False)
+    last_attempt_at = Column(DateTime, nullable=False)
+    last_success_date = Column(Date, nullable=True)
+    last_success_at = Column(DateTime, nullable=True)
+    error = Column(Text, nullable=True)
 
 
 @dataclass(frozen=True)

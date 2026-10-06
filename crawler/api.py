@@ -3,6 +3,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from requests.exceptions import InvalidURL
+from sqlalchemy.exc import SQLAlchemyError
 
 from .cafeteria.service import cafeteria_crawl_service
 from .config import CAFETERIA_URLS
@@ -21,6 +22,10 @@ class CafeteriaCrawlTriggerRequest(BaseModel):
         description="크롤링할 식당 타입 목록. 생략 시 전체 식당 크롤링",
     )
     mode: Literal["background", "sync"] = "background"
+    only_pending: bool = Field(
+        default=False,
+        description="한국 시간 기준 오늘 수집에 성공한 식당은 건너뜁니다. 정기 호출은 true를 사용합니다.",
+    )
 
 
 app = FastAPI(title="Hanseo Mate Crawler API", version="0.1.0")
@@ -59,6 +64,14 @@ def cafeteria_crawl_status() -> dict:
     return cafeteria_crawl_service.get_state()
 
 
+@app.get("/cafeteria-crawl/daily-status")
+def cafeteria_daily_status() -> dict:
+    try:
+        return cafeteria_crawl_service.get_daily_status()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="수집 기록 DB를 조회할 수 없습니다.") from exc
+
+
 @app.post("/cafeteria-crawl/run")
 def trigger_cafeteria_crawl(request: CafeteriaCrawlTriggerRequest) -> dict:
     # 요청된 식당 타입에 대해 URL 매핑 구성
@@ -80,10 +93,9 @@ def trigger_cafeteria_crawl(request: CafeteriaCrawlTriggerRequest) -> dict:
 
     try:
         if request.mode == "sync":
-            cafeteria_crawl_service.run_crawlers(targets)
-            return cafeteria_crawl_service.get_state()
+            return cafeteria_crawl_service.run_crawlers(targets, only_pending=request.only_pending)
 
-        return cafeteria_crawl_service.start_background_run(targets)
+        return cafeteria_crawl_service.start_background_run(targets, only_pending=request.only_pending)
     except (ValueError, InvalidURL) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

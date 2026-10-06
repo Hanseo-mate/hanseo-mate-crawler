@@ -34,7 +34,7 @@
 
 ## Restaurant Types
 
-식단 크롤러 요청의 `restaurant_type` 값은 아래 enum 중 하나입니다.
+식단 크롤러 요청의 `restaurant_types` 배열 원소는 아래 enum 중 하나입니다.
 
 | restaurant_type | 의미 |
 | --- | --- |
@@ -240,11 +240,14 @@ WHERE notice_type = ?
 - `div.fd_info p.txt`에서 기준 날짜를 파싱한 뒤 해당 주의 월요일을 계산합니다.
 - `div.fd_table table tbody tr`를 월요일부터 금요일까지 순회하며 `menu_date`를 계산합니다.
 - 현재 주차의 날짜, 식당, 식사 시간, 코너명, 가격, 반찬 배열, 원문을 정규화해 완전 비교합니다.
-- 내용이 같으면 DB 쓰기를 중단하고 상태를 `unchanged`로 반환합니다.
+- 한국 시간 기준 이번 주 식단인지 먼저 확인합니다. 지난주/다음 주 식단이나 빈 결과는 실패로 처리하고 기존 식단을 유지합니다.
+- 내용이 같으면 식단을 다시 저장하지 않고 상태를 `unchanged`로 반환합니다. 당일 수집 성공 기록은 갱신합니다.
 - 내용이 다르면 같은 `restaurant_type`의 과거 `daily_menus`를 모두 hard delete한 뒤 새 데이터를 저장합니다.
 - 상위 `daily_menus` 삭제 시 하위 `meal_sections`는 DB cascade로 함께 삭제됩니다.
-- 내용이 같으면 daemon timer가 2시간 뒤 재호출하며 최대 5회까지만 재시도합니다.
-- 재시도 timer는 호출 스레드를 점유하지 않으며 수동 실행이나 갱신 성공 시 취소됩니다.
+- Python 내부 재시도 timer는 없습니다. 호출 한 번에 선택한 식당을 한 번씩 수집합니다.
+- Spring이 월~금 한국 시간 01, 03, 05, 07, 09, 11, 13, 15, 17시에 `only_pending=true`로 호출합니다. 성공한 식당은 당일 후속 호출에서 건너뛰며 다음 한국 날짜에는 다시 수집합니다.
+- 식당별 성공 날짜와 마지막 시도는 `cafeteria_crawl_progress`에 영구 저장됩니다. `/cafeteria-crawl/daily-status`로 확인할 수 있습니다.
+- 식단 변경과 성공 기록은 같은 DB 트랜잭션에서 확정합니다. 재시작으로 중단된 `running` 기록은 다음 호출에서 다시 시도합니다.
 - 식단 조회 API는 Python에 두지 않고 Spring Boot가 MySQL을 직접 조회하는 구조를 유지합니다.
 
 파싱 규칙:
@@ -257,7 +260,7 @@ WHERE notice_type = ?
 - 메뉴명 끝의 `*`, `**`는 제거하고 반찬명 문자열만 JSON 배열에 저장합니다.
 - 각 코너의 정제 전 텍스트는 `raw_text`에 함께 저장합니다.
 
-동기 실행의 상태 응답은 `menus`에 아래 camelCase 구조를 포함합니다.
+동기 실행의 상태 응답은 `results[식당타입].menus`에 아래 camelCase 구조를 포함합니다.
 
 ```json
 {
@@ -530,84 +533,57 @@ http://34.64.250.12:8000
 
 ### 4. Cafeteria Crawl Status
 
-- Method: `GET`
-- Path: `/cafeteria-crawl/status`
-
-응답 예시:
-
-```json
-{
-  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
-  "status": "running",
-  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
-  "requested_restaurant_type": "MAIN_STUDENT",
-  "started_at": "2026-08-09T12:34:56.000000+00:00",
-  "finished_at": null,
-  "saved_daily_menus": 0,
-  "error": null
-}
-```
-
-`status` 값 의미는 공지 크롤링과 동일합니다.
+- `GET /cafeteria-crawl/status`: 현재 프로세스의 최근 실행 상태. 재시작 시 초기화됩니다.
+- `run_id`, `status`, `started_at`, `finished_at`, `business_date`, `only_pending`, `results`를 반환합니다.
+- `results`는 식당 타입을 키로 하는 객체이며 각 결과는 `status`, `url`, `saved_daily_menus`, `updated`, `error`, `menus`를 가집니다.
+- 전체 상태: `idle`, `starting`, `running`, `completed`, `unchanged`, `partial_failed`, `failed`.
+- 식당 상태: `pending`, `running`, `completed`, `unchanged`, `skipped`, `failed`.
+- `retry_count=0`, `max_retry_count=0`, `next_retry_at=null`은 호환용입니다. 내부 재시도는 없습니다.
 
 ### 5. Trigger Cafeteria Crawl
 
 - Method: `POST`
 - Path: `/cafeteria-crawl/run`
 
-요청 바디:
+정기 호출 본문:
 
 ```json
-{
-  "url": "https://www.hanseo.ac.kr/food/example.do",
-  "restaurant_type": "MAIN_STUDENT",
-  "mode": "background"
-}
+{"mode":"background","only_pending":true}
 ```
 
-필드 설명:
-
-| 필드 | 타입 | 필수 여부 | 설명 |
+| 필드 | 타입 | 기본값 | 설명 |
 | --- | --- | --- | --- |
-| `url` | `string` | 필수 | 식단 HTML을 가져올 대상 URL |
-| `restaurant_type` | `MAIN_STUDENT \| MAIN_STAFF \| TAEAN_STUDENT \| TAEAN_STAFF` | 필수 | 저장 대상 식당 종류 |
-| `mode` | `background \| sync` | 선택 | `background`는 즉시 반환, `sync`는 크롤링 완료 후 반환 |
+| `restaurant_types` | 식당 enum 배열 또는 null | null | 생략하면 전체 식당. 원본 URL은 크롤러 설정 사용 |
+| `mode` | `background` 또는 `sync` | background | 비동기 접수 또는 완료 후 응답 |
+| `only_pending` | boolean | false | true이면 한국 날짜 기준 당일 성공 식당을 건너뜀 |
 
-`mode=background` 응답 예시:
+`url`, `restaurant_type` 단수 필드는 수집 대상을 선택하지 않습니다. `restaurant_types`를 사용해야 합니다.
 
-```json
-{
-  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
-  "status": "running",
-  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
-  "requested_restaurant_type": "MAIN_STUDENT",
-  "started_at": "2026-08-09T12:34:56.000000+00:00",
-  "finished_at": null,
-  "saved_daily_menus": 0,
-  "error": null
-}
-```
+background 응답은 새 `run_id`와 `status=starting`을 가진 접수 스냅샷입니다. HTTP 200을 수집 완료로 취급하지 않습니다. sync는 이번 실행의 최종 상태를 반환합니다. 수집 실패는 식당별 `results`에 표시되므로 HTTP 상태만으로 성공을 판정하지 않습니다.
 
-`mode=sync` 응답 예시:
-
-```json
-{
-  "run_id": "c2aa1e8f1e934efeb44b55deefde4f5c",
-  "status": "completed",
-  "requested_url": "https://www.hanseo.ac.kr/food/example.do",
-  "requested_restaurant_type": "MAIN_STUDENT",
-  "started_at": "2026-08-09T12:34:56.000000+00:00",
-  "finished_at": "2026-08-09T12:35:01.000000+00:00",
-  "saved_daily_menus": 5,
-  "error": null
-}
-```
-
-오류 응답:
+이번 주 식단을 정상 확인한 `completed`/`unchanged`는 당일 성공입니다. `only_pending=true`로 다시 호출하면 `skipped`가 됩니다. 다음 한국 날짜에는 자동으로 재수집 대상이 됩니다. 수동으로 다시 확인하려면 `only_pending=false`를 사용합니다.
 
 | HTTP Status | 상황 |
 | --- | --- |
-| `409` | 이미 다른 식단 크롤링이 실행 중 |
+| 409 | 현재 크롤러 프로세스에서 다른 식단 수집이 실행 중 |
+| 400 | 요청한 식당의 URL 설정 누락 |
+| 422 | 잘못된 mode, 식당 enum 또는 요청 형식 |
+
+### 6. Persistent Daily Status
+
+- `GET /cafeteria-crawl/daily-status`: DB에 저장된 당일 수집 결과. 서버 재시작 후에도 유지됩니다.
+- 최상위: `business_date`(KST), `timezone`, `pending_restaurant_types`, `results`.
+- `results[식당타입]`: `completed_today`, `status`, `business_date`, `run_id`, `last_attempt_at`, `last_success_date`, `last_success_at`, `error`.
+- 기록이 없는 식당: `status=pending`, `completed_today=false`, 날짜/시각/run_id/error는 null.
+- `status`는 마지막 시도의 상태이고 `completed_today`가 당일 성공 판정값입니다. 어제 completed였어도 오늘은 false입니다.
+- 시각은 UTC ISO 8601, 날짜는 한국 시간 기준입니다. 시작 날짜로 작업을 묶어 자정을 넘긴 어제 작업을 오늘 성공으로 계산하지 않습니다.
+- 기록 DB를 읽을 수 없으면 503을 반환합니다.
+
+정기 호출은 Spring에서 `0 0 1-17/2 * * MON-FRI`, `Asia/Seoul`로 관리하고 항상 `only_pending=true`로 요청합니다. Python은 시간 제한이나 자동 기동을 하지 않으므로 Spring 일정 배포가 필수입니다. 17시에 시작한 작업은 완료까지 진행합니다. 01시에 성공한 뒤 학교가 수정한 내용은 다음 평일 01시에 확인됩니다.
+
+식당별 수집 이력 테이블은 `python -m crawler.cafeteria.migrate`로 준비합니다. `scripts/deploy.sh`가 재시작 전에 자동 실행합니다. 현재 실행 잠금은 프로세스 내부이므로 크롤러는 단일 worker/인스턴스로 운영합니다.
+
+Spring 작업 프롬프트: [SPRING_CAFETERIA_HANDOFF.md](SPRING_CAFETERIA_HANDOFF.md)
 
 ## How Spring Boot Should Use The API
 
@@ -672,7 +648,7 @@ curl http://34.64.250.12:8000/crawl/status
 ```bash
 curl -X POST http://34.64.250.12:8000/cafeteria-crawl/run \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://www.hanseo.ac.kr/food/example.do","restaurant_type":"MAIN_STUDENT","mode":"background"}'
+  -d '{"mode":"background","only_pending":true}'
 ```
 
 ### 식단 상태 확인

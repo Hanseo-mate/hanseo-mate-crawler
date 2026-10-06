@@ -6,7 +6,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .config import DB_CONFIG
-from .models import Base, NoticeRecord
+from .models import Base, CafeteriaCrawlProgress, DailyMenu, MealSection, NoticeRecord
 
 
 RETENTION_PERIOD_YEARS = 1
@@ -207,13 +207,16 @@ def ensure_cafeteria_schema() -> None:
         "raw_text",
     }
 
-    with SQLALCHEMY_ENGINE.begin() as connection:
-        if "dishes" in table_names:
-            connection.execute(text("DROP TABLE dishes"))
-        if meal_section_columns and meal_section_columns != expected_columns:
-            connection.execute(text("DROP TABLE meal_sections"))
-
-    Base.metadata.create_all(bind=SQLALCHEMY_ENGINE)
+    missing_columns = expected_columns - meal_section_columns
+    if "meal_sections" in table_names and missing_columns:
+        raise RuntimeError(
+            "meal_sections 스키마 마이그레이션이 필요합니다. 기존 데이터는 유지합니다. "
+            f"누락 컬럼: {', '.join(sorted(missing_columns))}"
+        )
+    Base.metadata.create_all(
+        bind=SQLALCHEMY_ENGINE,
+        tables=[DailyMenu.__table__, MealSection.__table__, CafeteriaCrawlProgress.__table__],
+    )
 
 
 def _column_exists(cursor: pymysql.cursors.Cursor, table_name: str, column_name: str) -> bool:
