@@ -1,0 +1,58 @@
+
+name: Deploy Test Crawler
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crawler-test-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Crawler to Test Server
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 30
+
+    env:
+      CRAWLER_ENV: test
+      CRAWLER_TEST_DB_HOST: 127.0.0.1
+      CRAWLER_TEST_DB_USER: ci_not_a_real_user
+      CRAWLER_TEST_DB_PASSWORD: ci_not_a_real_password
+      CRAWLER_TEST_DB_NAME: hanseo_mate_test
+      CRAWLER_TEST_IMAGE_DIR: /tmp/crawler-ci-images
+      CRAWLER_TEST_IMAGE_BASE_URL: https://test-api.hsmate.win/crawler-images/
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run unit tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/crawler-ci-venv"
+          "$RUNNER_TEMP/crawler-ci-venv/bin/python" -m pip install -r requirements-dev.txt
+          "$RUNNER_TEMP/crawler-ci-venv/bin/python" -m unittest discover -s tests -v
+
+      - name: Package crawler
+        run: |
+          tar \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            -czf "$RUNNER_TEMP/$GITHUB_SHA.tar.gz" \
+            crawler api_main.py main.py requirements.txt
+
+          install -m 600 \
+            "$RUNNER_TEMP/$GITHUB_SHA.tar.gz" \
+            "/var/lib/hanseo-crawler-test-deploy/$GITHUB_SHA.tar.gz"
+
+      - name: Deploy test crawler
+        run: |
+          sudo -n /usr/local/sbin/deploy-hanseo-crawler-test "$GITHUB_SHA"
