@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 from requests.exceptions import InvalidURL
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -9,6 +9,8 @@ from .cafeteria.service import cafeteria_crawl_service
 from .config import CAFETERIA_URLS
 from .models import RestaurantType
 from .service import crawl_service
+from .academic_calendar.service import academic_calendar_crawl_service
+from .academic_calendar.repository import AlreadyRunning, SchemaError
 
 
 class CrawlTriggerRequest(BaseModel):
@@ -29,6 +31,45 @@ class CafeteriaCrawlTriggerRequest(BaseModel):
 
 
 app = FastAPI(title="Hanseo Mate Crawler API", version="0.1.0")
+
+
+class AcademicCalendarTriggerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    academic_year: StrictInt = Field(ge=2026, le=9998)
+    semesters: list[StrictInt] = Field(min_length=1, max_length=2)
+    mode: Literal["background"] = "background"
+
+    @field_validator("semesters")
+    @classmethod
+    def validate_semesters(cls, value):
+        if any(s not in (1, 2) for s in value) or len(set(value)) != len(value):
+            raise ValueError("semesters는 1, 2 중 선택한 중복 없는 목록이어야 합니다.")
+        return value
+
+
+@app.post("/academic-calendar-crawl/run", status_code=202)
+def trigger_academic_calendar(request: AcademicCalendarTriggerRequest) -> dict:
+    try:
+        return academic_calendar_crawl_service.start_background_run(request.academic_year, request.semesters)
+    except AlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except SchemaError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="학사일정 실행 이력 DB/마이그레이션을 확인하세요.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="학사일정 백그라운드 작업을 시작하지 못했습니다.") from exc
+
+
+@app.get("/academic-calendar-crawl/status")
+def academic_calendar_status(run_id: str | None = None) -> dict:
+    try:
+        result = academic_calendar_crawl_service.get_state(run_id)
+    except (SQLAlchemyError, SchemaError) as exc:
+        raise HTTPException(status_code=503, detail="학사일정 실행 이력 DB/마이그레이션을 확인하세요.") from exc
+    if result is None:
+        raise HTTPException(status_code=404, detail="실행 기록을 찾을 수 없습니다.")
+    return result
 
 
 @app.get("/health")

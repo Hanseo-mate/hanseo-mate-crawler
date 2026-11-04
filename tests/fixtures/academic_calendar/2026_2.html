@@ -1,0 +1,1477 @@
+
+
+
+
+
+
+
+
+
+ 
+
+
+	<!doctype html>
+	<html lang="ko">
+		<head>
+			<!–[if lt IE 9]><script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]–>
+			<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+			<link rel="stylesheet" href="/css/template/00004/common.css" media="all">
+			<link rel="stylesheet" href="/css/template/00004/sub.css" media="all">
+			<link rel="stylesheet" href="/css/template/00004/toppop.css" media="all">
+			<link rel="stylesheet" href="/css/template/00004/con_common.css" media="all">        
+			<link rel="stylesheet" href="/css/template/00004/page_view.css" media="all">
+			
+			
+			<LINK href="/css/board/board-gray.css?<%=KLICSHA512Hash.SHA512KLIC(day)%>" rel="stylesheet" media="all">
+			
+			<script type="text/javascript" src="/script/template/00004/jquery.min.1.11.0.js"></script>
+			<script type="text/javascript" src="/script/template/00004/jquery-ui.min.js"></script>
+			<script type="text/javascript" src="/script/template/00004/modernizr-2.6.2.min.js"></script>
+			<script type="text/javascript" src="/script/template/00004/html5shiv.js"></script>
+			<script type="text/javascript" src="/script/template/00004/common.js"></script>
+			<script type="text/javascript" src="/script/template/00004/common-scroll.js"></script>
+			<script type="text/javascript" src="/script/template/00004/sub.js"></script>
+			<script type="text/javascript" src="/script/common/common.js"></script>
+
+			<link rel="shortcut icon" href="favicon.ico">
+			<title>학사안내 - 학사일정</title>
+		</head>
+		<script>
+		
+
+		function iframe_autoresize(arg) {
+		document.domain="hanseo.ac.kr";
+		//alert("IFRAME=" + arg.name+".document.body.scrollHeight");
+		//arg.height = 0;
+		arg.height = eval(arg.name+".document.body.scrollHeight");
+		}
+		
+		function goUrl(url){
+			location.href=url;
+		}
+		</script>
+		<div id="viewLoading" style="display:none">
+			<div class="loading"><img src="/images/loading2.gif" alt="loading"></div>
+		</div>
+		
+		<body class="site-hs">
+			<!-- //Header -->
+			<div id="wrap">
+				  <div class="js_mobile_check"></div>
+		    	
+
+
+
+
+
+
+
+<script>
+//<![CDATA[
+function sendSearch() 
+{
+	var forms = document.headContents;
+	if (forms.q.value == 0) { alert('검색어를 입력하세요'); forms.q.focus(); return false; }
+	window.open("", "search");
+	forms.action = "/sub/common/search/contents/list.jsp";
+	forms.method = "get";
+	forms.target="search";
+	forms.submit();
+}
+
+function holdPage() 
+{
+	alert("홈페이지 준비중입니다!");
+}
+
+//]]>
+</script>
+
+   <!-- header  -->
+  <header id="header"> 
+    <!-- 메뉴 -->
+    <div class="headerWrap">
+      <h1 class="logo"><a href="/main.do?s=hs"><span>한서대학교</span></a></h1>
+      <div class="toputil"> 
+        
+        <!-- 상단 버튼 임시 주석처리 팝업열고 닫기 버튼
+        <ul class="top_mn">
+          <li class="popup"><a href="#none" class="popup_close">팝업닫기<span class="ico"></span></a></li>
+        </ul>
+        상단 버튼 -->
+        
+        <div class="site_go">
+          <ul>
+            <li class="btn_go01"><a href="/main.do?s=hs">한서대학교</a></li>
+            <li class="btn_go02"><a href="/main.do?s=ta">태안캠퍼스</a></li>
+          </ul>
+        </div>
+        <!-- 대학홈 캠퍼스바로가기 --> 
+        
+        <!-- 사용자메뉴 -->
+        <div class="global_mn">
+          <ul class="global">
+            <li><a href="https://nportal.hanseo.ac.kr/" target="_blank" title="한서포탈">한서포탈</a></li>
+            <li><a href="/sitemap.do?s=hs">사이트맵</a></li>
+          </ul>
+        </div>
+        <!-- //사용자메뉴 --> 
+        
+        <!-- 언어 -->
+        <div class="site_code">
+          <h3 class="blind">언어선택</h3>
+          <button type="button">Languages</button>
+          <ul>
+            <li><a href="#" title="Korea">Korea site</a></li>
+            <li><a href="http://hseng.hanseo.ac.kr/" title="English(새창으로 이동됩니다)" target="_blank">English site</a></li>
+			<li><a href="/main.do?s=china" title="Chinese(새창으로 이동됩니다)" target="_blank">Chinese site</a></li>
+			<li><a href="/main.do?s=vietnam" title="Vietnamese(새창으로 이동됩니다)" target="_blank">Vietnamese site</a></li>
+			<li><a href="/main.do?s=mongolia" title="Mongolian(새창으로 이동됩니다)" target="_blank">Mongolian site</a></li>
+          </ul>
+        </div>
+        
+		<!-- //언어 --> 
+
+
+		
+		<!-- 구글 번역 -->
+		
+	<!-- 구글번역 -->
+	<link rel="stylesheet" type="text/css" href="/css/template/00004/google-translate-common.css" />
+	<div class="site_code site_code2">
+		<h3 class="blind">언어선택</h3>
+		<button type="button"><img src="/images/common/GT.png" alt=""></button>
+		<ul>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('ko');"><img src="/images/common/GT_ko.png" alt="">한국어</a></li>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('en');"><img src="/images/common/GT_eg.png" alt="">English</a></li>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('zh-CN');"><img src="/images/common/GT_ch.png" alt="">中文</a></li>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('ja');"><img src="/images/common/GT_jp.png" alt="">日本語</a></li>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('mn');"><img src="/images/common/GT_mg.png" alt="">Монгол</a></li>
+			<li><a href="#none" onclick="return doGoogleTranslateHanseo('vi');"><img src="/images/common/GT_vt.png" alt="">Tiếng Việt</a></li>
+		</ul>
+	</div>
+
+	<div id="google_translate_element_hanseo" style="display:none;"></div>
+	<script type="text/javascript" src="/script/template/00004/google-translate.js?v=20260806"></script>
+	<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInitHanseo"></script>
+	<!-- //구글번역 -->
+
+		<!-- //구글 번역 -->
+
+	</div>
+
+
+	<a href="#" class="mob_btn"><span class="hid">모바일 메뉴</span></a>
+      <div id="nav">
+        <div id="blind"></div>
+        <div id="gnb" >
+<ul class="group" >
+							<li class="menu1">
+								<a href='/sub/info.do?m=010101&page=010101&amp;s=hs' ><span>대학소개</span></a>
+									<ul class="menuBox group">
+										<li><a href='/sub/info.do?m=010101&page=010101&amp;s=hs' ><strong>총장실</strong></a></li>
+										<li><a href='/sub/info.do?m=010201&page=010201&amp;s=hs' ><strong>이념과 비전</strong></a></li>
+										<li><a href='/sub/info.do?page=010305&amp;m=0103&amp;s=hs' ><strong>발자취</strong></a></li>
+										<li><a href='/sub/info.do?m=010401&page=010401&amp;s=hs' ><strong>학교현황</strong></a></li>
+										<li><a href='/sub/info.do?page=01050210&m=010501&s=hs' ><strong>대학기관</strong></a></li>
+										<li><a href='/sub/info.do?page=01060201&amp;m=010602&amp;s=hs' ><strong>법인현황</strong></a></li>
+										<li><a href='/sub/info.do?page=010703&m=0107&s=hs' ><strong>예산결산공고</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=10120&amp;m=0115&amp;s=hs' ><strong>적립금운용현황</strong></a></li>
+										<li><a href='/sub/info.do?m=010801&page=010801&amp;s=hs' ><strong>상징과 UI규정</strong></a></li>
+										<li><a href='/sub/info.do?m=011401&amp;page=011401&amp;s=hs' ><strong>한서 ESG</strong></a></li>
+										<li><a href='/sub/info.do?m=011001&page=01100101&amp;s=hs' ><strong>캠퍼스 안내</strong></a></li>
+										<li><a href='/main.do?s=laws&amp;m=0111'  target='_blank' ><strong>규정</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu2">
+								<a href='/sub/info.do?m=0201&page=0201&amp;s=hs' ><span>입학안내</span></a>
+									<ul class="menuBox group">
+										<li><a href='/sub/info.do?page=0201&amp;m=0201&amp;s=hs' ><strong>대학 입학안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0202&amp;m=0202&amp;s=hs' ><strong>대학원 입학안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0204&amp;m=0204&amp;s=hs' ><strong>2027학년 모집 학과 소개</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu3">
+								<a href='/sub/info.do?page=031001&amp;m=031001&amp;s=hs' ><span>대학/대학원</span></a>
+									<ul class="menuBox group">
+										<li><a href='/sub/info.do?page=0304&amp;m=0304&amp;s=hs' ><strong>항공학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0316&amp;m=0316&amp;s=hs' ><strong>항공우주공학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0318&amp;m=0318&amp;s=hs' ><strong>AIㆍSW학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0317&amp;m=0317&amp;s=hs' ><strong>항공관광학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0320&amp;m=0320&amp;s=hs' ><strong>문화콘텐츠학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0306&amp;m=0306&amp;s=hs' ><strong>보건학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0319&amp;m=0319&amp;s=hs' ><strong>디자인융합학부</strong></a></li>
+										<li><a href='/sub/info.do?m=0302&amp;page=030207&amp;s=hs' ><strong>해양·스포츠학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0313&amp;m=0313&amp;s=hs' ><strong>자유전공학부</strong></a></li>
+										<li><a href='/sub/info.do?page=0322&amp;m=0322&amp;s=hs' ><strong>충남RISE융합학부(계약학과)</strong></a></li>
+										<li><a href='/sub/info.do?page=031001&m=031001&s=hs' ><strong>HICA</strong></a></li>
+										<li><a href='/sub/info.do?page=0308&amp;m=0308&amp;s=hs' ><strong>대학원</strong></a></li>
+										<li><a href='/sub/info.do?page=0323&amp;m=0323&amp;s=hs' ><strong>2025년도 이전학과</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu4">
+								<a href='/boardCnts/list.do?boardID=298&m=040101&amp;s=hs' ><span>학사안내</span></a>
+									<ul class="menuBox group">
+										<li><a href='/schdList.do?m=0405&amp;s=hs' ><strong>학사일정</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=298&m=040101&amp;s=hs' ><strong>공지 및 문의</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=325&m=040222&amp;s=hs' ><strong>학사정보</strong></a></li>
+										<li><a href='/sub/info.do?m=040301&page=040301&amp;s=hs' ><strong>학생복지</strong></a></li>
+										<li><a href='/sub/info.do?page=0404&amp;m=0404&amp;s=hs' ><strong>제증명발급안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0406&amp;m=0406&amp;s=hs' ><strong>전자출결시스템</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu5">
+								<a href='/sub/info.do?page=0501&m=0501&amp;s=hs' ><span>대학생활</span></a>
+									<ul class="menuBox group">
+										<li><a href='/sub/info.do?page=0501&amp;m=0501&amp;s=hs' ><strong>기숙사정보</strong></a></li>
+										<li><a href='/sub/info.do?page=0503&amp;m=0503&amp;s=hs' ><strong>동아리안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0514&amp;m=0514&amp;s=hs' ><strong>학과 연락처</strong></a></li>
+										<li><a href='/food/foodView.do?m=0504&amp;s=hs' ><strong>교내식당 메뉴</strong></a></li>
+										<li><a href='/sub/info.do?page=050401&amp;m=0505&amp;s=hs' ><strong>원격지원서비스</strong></a></li>
+										<li><a href='/sub/info.do?page=050404&amp;m=0512&amp;s=hs' ><strong>Office365 안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0508&amp;m=0508&amp;s=hs' ><strong>무선인터넷 안내</strong></a></li>
+										<li><a href='/sub/info.do?page=050405&amp;m=0509&amp;s=hs' ><strong>정품소프트웨어사용안내</strong></a></li>
+										<li><a href='/sub/info.do?page=0515&amp;m=0515&amp;s=hs' ><strong>총학생회</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu6">
+								<a href='https://www.hanseo.ac.kr/sub/info.do?page=060301&m=060301&s=hs' ><span>교류협력</span></a>
+									<ul class="menuBox group">
+										<li><a href='/sub/info.do?m=060301&page=060301&amp;s=hs' ><strong>국제교류</strong></a></li>
+										<li><a href='/sub/info.do?m=060101&page=060101&amp;s=hs' ><strong>발전기금안내</strong></a></li>
+										<li><a href='/fund/InsertView.do?m=0602&amp;s=hs' ><strong>발전기금신청</strong></a></li>
+									</ul>
+							</li>
+							<li class="menu9">
+								<a href='/boardCnts/list.do?boardID=34&m=0901&s=hs' ><span>한서홍보</span></a>
+									<ul class="menuBox group">
+										<li><a href='/boardCnts/list.do?boardID=34&amp;m=0901&amp;s=hs' ><strong>한서대 뉴스</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=35&amp;m=0902&amp;s=hs' ><strong>홍보 디지털 아카이브</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=10065&amp;m=0909&amp;s=hs' ><strong>한서 자료관</strong></a></li>
+										<li><a href='/sub/info.do?page=0911&amp;m=0911&amp;s=hs' ><strong>디지털자미원</strong></a></li>
+										<li><a href='/hs/hsSns/List.do?m=0908&amp;s=hs' ><strong>한서SNS</strong></a></li>
+										<li><a href='/boardCnts/list.do?boardID=10096&amp;m=0912&amp;s=hs' ><strong>한서인</strong></a></li>
+									</ul>
+							</li>
+</ul>
+</div>
+
+      </div>
+    </div>
+    <!-- //메뉴 --> 
+  </header>
+  <!-- //header  --> 
+
+				<!-- //Header -->
+				
+				<!-- Sub Content -->
+				<div id="sub_container_wrap">
+					<!-- 비주얼 -->
+			        <div class="area_visual">
+			        	<!-- 260612 수정 -->
+			        	<p class="txt1">Connecting the Future with Glocal Innovation
+			        		<span>HANSEO University</span>
+			        	</p>
+			            <p class="txt2">글로컬 혁신으로 미래를 여는 <span>한서대학교</span></p>
+			        	<!--
+			            <p class="txt1"><span>배움</span>이 <span>즐거운</span> 대학교 <br>
+			                <span>함께</span> 가꾸는 <span>한서교육</span></p>
+			            <p class="txt2">한서대학교</p>
+			             -->
+			        </div>
+			        <!-- //비주얼 -->
+						<!-- 왼쪽메뉴 -->
+						<div class="sub_content_wrap"> 
+						<aside id="menu">
+							
+
+
+
+
+
+<!-- 왼쪽메뉴시작 -->
+<!-- <a href="#" id="mLnb"><img src="images/common/gnb_button.png" alt="서브메뉴보기"></a> -->
+<h3>학사안내</h3>
+	<nav>
+		<ul class="lnb">
+<li  class="on">
+	<a href='/schdList.do?m=0405&amp;s=hs' title='학사일정' >
+학사일정</a>
+</li>
+<li  class="">
+	<a href='#moveTab' onClick=" javascript:leftMenuView(112);return false; " onKeyPress='' title='공지 및 문의' >
+공지 및 문의</a>
+	<ul id='LMenu112' class="subLnb">
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=298&amp;m=040101&amp;s=hs' title='학사공지' >
+학사공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=299&amp;m=040102&amp;s=hs' title='일반공지' >
+일반공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=301&amp;m=040104&amp;s=hs' title='장학공지' >
+장학공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=302&amp;m=040105&amp;s=hs' title='대학원공지' >
+대학원공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=303&amp;m=040106&amp;s=hs' title='취업창업공지' >
+취업창업공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=304&amp;m=040107&amp;s=hs' title='교류협력공지' >
+교류협력공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=305&amp;m=040108&amp;s=hs' title='산학연구공지' >
+산학연구공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=306&amp;m=040109&amp;s=hs' title='입찰공지' >
+입찰공지</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=10098&amp;m=040111&amp;s=hs' title='채용공지' >
+채용공지</a>
+</li>
+<li  class="">
+	<a href='javascript:chkMenuAuth(1)' title='질문과답' >
+질문과답</a>
+</li>
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=10075&amp;m=040103&amp;s=hs' title='졸업생취업지원공지' >
+졸업생취업지원공지</a>
+</li>
+  </ul>
+</li>
+<li  class="">
+	<a href='#moveTab' onClick=" javascript:leftMenuView(113);return false; " onKeyPress='' title='학사정보' >
+학사정보</a>
+	<ul id='LMenu113' class="subLnb">
+<li  class="">
+	<a href='/boardCnts/list.do?boardID=325&amp;m=040222&amp;s=hs' title='FAQ' >
+FAQ</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040202&amp;m=040202&amp;s=hs' title='휴학' >
+휴학</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040203&amp;m=040203&amp;s=hs' title='복학' >
+복학</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040204&amp;m=040204&amp;s=hs' title='자퇴' >
+자퇴</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040205&amp;m=040205&amp;s=hs' title='재입학' >
+재입학</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040206&amp;m=040206&amp;s=hs' title='부전공' >
+부전공</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040207&amp;m=040207&amp;s=hs' title='복수전공' >
+복수전공</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040227&amp;m=040227&amp;s=hs' title='융합전공' >
+융합전공</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040228&amp;m=040228&amp;s=hs' title='마이크로디그리' >
+마이크로디그리</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040208&amp;m=040208&amp;s=hs' title='학과배정' >
+학과배정</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040209&amp;m=040209&amp;s=hs' title='학적부정정' >
+학적부정정</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040210&amp;m=040210&amp;s=hs' title='개인정보정정' >
+개인정보정정</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040212&amp;m=040212&amp;s=hs' title='수강신청' >
+수강신청</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040213&amp;m=040213&amp;s=hs' title='계절학기' >
+계절학기</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040214&amp;m=040214&amp;s=hs' title='졸업이수학점' >
+졸업이수학점</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040216&amp;m=040216&amp;s=hs' title='군복무중학점취득인증제' >
+군복무중학점취득인증제</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040217&amp;m=040217&amp;s=hs' title='사이버강좌' >
+사이버강좌</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040218&amp;m=040218&amp;s=hs' title='성적평가 및 재수강' >
+성적평가 및 재수강</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040219&amp;m=040219&amp;s=hs' title='학점교류' >
+학점교류</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040215&amp;m=040215&amp;s=hs' title='전과' >
+전과</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040226&amp;m=040226&amp;s=hs' title='조기졸업' >
+조기졸업</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040223&amp;m=040221&amp;s=hs' title='외국어인증제' >
+외국어인증제</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040224&amp;m=040223&amp;s=hs' title='표준현장실습학기제' >
+표준현장실습학기제</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040225&amp;m=040225&amp;s=hs' title='사회봉사 인증제' >
+사회봉사 인증제</a>
+</li>
+  </ul>
+</li>
+<li  class="">
+	<a href='#moveTab' onClick=" javascript:leftMenuView(114);return false; " onKeyPress='' title='학생복지' >
+학생복지</a>
+	<ul id='LMenu114' class="subLnb">
+<li  class="">
+	<a href='/sub/info.do?page=040301&amp;m=040301&amp;s=hs' title='장학제도' >
+장학제도</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040302&amp;m=040302&amp;s=hs' title='학생증발급' >
+학생증발급</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=040303&amp;m=040303&amp;s=hs' title='국제학생증발급' >
+국제학생증발급</a>
+</li>
+  </ul>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=0404&amp;m=0404&amp;s=hs' title='제증명발급안내' >
+제증명발급안내</a>
+</li>
+<li  class="">
+	<a href='/sub/info.do?page=0406&amp;m=0406&amp;s=hs' title='전자출결시스템' >
+전자출결시스템</a>
+</li>
+</ul>
+</nav>
+<script>leftMenuView(1);</script>
+
+
+						</aside>
+						<!-- 왼쪽메뉴 -->
+						<!-- 서브내용 -->
+							<section id="sub_content">
+								
+
+
+
+
+
+
+    <!-- sub 내용 -->
+		<div class="title_area">
+		<h2 class="pageTitle">학사일정</h2>
+			<div class="location"><a href="/main.do?s=hs" class="home">HOME</a><strong><a href='/boardCnts/list.do?boardID=298&m=040101'>학사안내</a> > <a href='/schdList.do?m=0405'>학사일정</a></strong> </div>
+ <!-- sns -->
+          <div class="snsBox">
+            <button type="button" class="btnPrint"><span>인쇄</span></button>
+			<!--
+            <button type="button" class="btnShare"><span>공유</span></button>
+            <div class="sns_more">
+              <button type="button" class="btnFbook" title="페이스북"><span>페이스북</span></button>
+              <button type="button" class="btnTwt" title="트위터"><span>트위터</span></button>
+              <button type="button" class="btnBlog" title="블로그"><span>블로그</span></button>
+              <button type="button" class="btnYtb" title="유투브"><span>유투브</span></button>
+              <button type="button" class="btnInstar" title="인스타그램"><span>인스타그램</span></button>
+            </div>
+			-->
+          </div>
+          <!-- //sns --> 
+</div>
+
+
+
+								<div class="subCntBody clearfix"> 
+								
+
+
+
+
+
+
+
+
+
+
+<style>
+
+
+/* 업무일람표 및 학사일정 */
+.table_style02 {
+	border-collapse:collapse;
+	/* border-right:1px solid #c7d4ea; */
+	border-top: 2px solid #515151;
+	}
+.table_style02 th {
+	/* border-left:1px solid #c7d4ea; */
+	border-bottom: 1px solid #e9e9e9;
+	/* border-right:1px solid #c7d4ea; */
+	/* background-color:#dce6f6; */
+	color: #000000;
+	font-size: 15px;
+	font-weight: bold !important;
+	padding: 13px;
+}
+.table_style02 td {
+	color:#666666;
+	font-size: 14px;
+	text-align:center;
+	padding: 14px;
+	border-left: 1px solid #e9e9e9;
+	/* border-right:1px solid #c7d4ea; */
+	border-bottom: 1px solid #e9e9e9;
+}
+
+
+
+.table_style03 {
+	border-collapse:collapse;
+	/* border-right:1px solid #c7d4ea; */
+	border-top: 2px solid #515151;
+	}
+.table_style03 th {
+	/* border-left:1px solid #c7d4ea; */
+	border-bottom: 1px solid #e9e9e9;
+	/* border-right:1px solid #c7d4ea; */
+	/* background-color:#dce6f6; */
+	color: #000000;
+	font-size: 15px;
+	padding: 14px;
+	font-weight: bold !important;
+}
+.table_style03 td {
+	font-family:'NotoR';
+	color:#666666;
+	font-size: 14px;
+	text-align:center;
+	padding: 14px;
+	border-left: 1px solid #e9e9e9;
+	/* border-right: 1px solid #e9e9e9; */
+	border-bottom: 1px solid #e9e9e9;
+}
+
+
+.list_blue {
+	font-family:'NotoR';
+	font-size: 13px;
+	color:#7e7e7e;
+	line-height:25px;
+	padding:0;
+	margin:0;
+}
+
+.table_style02 tr > td:first-of-type {font-weight:bold; border-left:none; font-size:1rem; }
+.table_style02 .calendar_tb th, .table_style02 .calendar_tb td {border-left:none; padding:.6rem .2rem .8rem.2rem; border-bottom:none;}
+.table_style02 .calendar_tb th {border-bottom:none;}
+.table_style02 .calendar_tb td {font-size:14px !important;}
+.table_style02 td > ul > li > span {width:20%; display:block; float:left; font-weight:bold;}
+.table_style02 .list_blue {font-family:'NotoR';}
+.sel_year{font-family:'NotoR'; height:2.5rem; border:none; display:block; text-align:center; margin:0 auto; font-size:1.5rem; font-weight:bold;}
+.sel_year option {font-size:.8rem;}
+table a.btn_semester {position:absolute; top:1.25rem; right:0; margin-left:.5rem;transform: translateY( -10px);}
+
+.table_style03 th {font-family:'NotoR'; }
+.table_style03 th:first-of-type {border-left:none; }
+.table_style03 td:first-of-type {font-weight:bold; font-family:'NotoR'; border-left:none; font-size:1rem;}
+</style>
+<script language="javascript">
+	function setData(reqSeq, reqSDate, reqEDate, reqSubject)
+	{
+		var forms = document.calForm;
+		calForm.seq.value = reqSeq;
+		calForm.sdate.value = reqSDate;
+		calForm.edate.value = reqEDate;
+		calForm.subject.value = reqSubject;
+	}
+
+	function insData()
+	{
+		var forms = document.calForm;
+		forms.seq.value = "0";
+		if(forms.sdate.value == "")
+		{
+			alert("시작일을 선택해 주세요");
+			forms.sdate.focus();
+			return;
+		}
+		if(forms.edate.value == "")
+		{
+			alert("종료일을  선택해 주세요");
+			forms.edate.focus();
+			return;
+		}
+		if(forms.subject.value == "")
+		{
+			alert("내용을 입력해주세요");
+			forms.subject.focus();
+			return;
+		}
+		forms.action = "/schdlCal/insert.do";
+		forms.target = "schdlCalFrm";
+		forms.submit();
+	}
+	function modData()
+	{
+		var forms = document.calForm;
+		if(forms.seq.value == "" || forms.seq.value == "0")
+		{
+			alert("수정할 업무를  선택해주세요");
+			return;
+		}
+		if(forms.sdate.value == "")
+		{
+			alert("시작일을 선택해주세요");
+			forms.sdate.focus();
+			return;
+		}
+		if(forms.sdate.value == "")
+		{
+			alert("종료일을  선택해주세요");
+			forms.edate.focus();
+			return;
+		}
+		if(forms.subject.value == "")
+		{
+			alert("내용을 입력해주세요");
+			forms.subject.focus();
+			return;
+		}
+		if(!confirm("수정하시겠습니까?")) return;
+		forms.action = "/schdlCal/modify.do";
+		forms.target = "schdlCalFrm";
+		forms.submit();
+	}
+	function delData()
+	{
+		var forms = document.calForm;
+		if(forms.seq.value == "")
+		{
+			alert("삭제할 업무를  선택해주세요");
+			return;
+		}
+		if(!confirm("삭제하시겠습니까?")) return;
+		forms.action = "/schdlCal/delete.do";
+		forms.target = "schdlCalFrm";
+		forms.submit();
+	}
+	
+	function goCalView(gubun)
+	{
+		var forms = document.calForm;
+		if( gubun == "1" )
+			forms.section.value = "1";
+		else
+			forms.section.value = "2";
+		
+		forms.action = "/schdList.do";
+		forms.submit();		
+	}
+
+	//우클릭 방지
+	document.oncontextmenu = function anonymous() { alert('마우스 오른쪽 버튼은 사용하실 수 없습니다'); return false } ;
+	
+	//엑셀업로드
+	function submitItmXls(url, type)
+	{
+	var f = document.calForm;
+	var fileNameLen = f.file_upload.value.length;
+	if(f.file_upload.value == "" ){
+		alert("파일을 선택해 주세요");
+		return;
+	}
+
+	else if(f.file_upload.value.substring(fileNameLen-3 , fileNameLen ) != "xls"){
+		alert("확장자가 xls 인 엑셀 파일을 선택해 주세요");
+		return;
+	}
+	if (type == "UPLOAD") {
+			message = "업로드 하시겠습니까?";
+
+			if (!confirm(message))
+				return;
+		
+			document.getElementById('viewLoading').style.display="";
+			f.action = url;
+			f.submit();
+		}
+	}
+	
+	function fileDown()
+	{
+		var forms = document.calForm;
+		// forms.action = "http://www.hanseo.ac.kr/boardCnts/fileDown.do?fileSeq=d43ccaee8d5972b5917918a76da42aa6";
+		//forms.action = "/boardCnts/fileDown.do?fileSeq=416dff02a312a6664326b4ef82fd7f5d";  // 실제 다운로드 가능 20240111
+		//forms.target = "schdlCalFrm";
+		//forms.submit();
+		location.href= "/boardCnts/fileDown.do?fileSeq=3217b9ef758a2099ccc1cf8ec6b8c466";
+	}
+	
+</script>	
+
+<form commanName="schdlVO" name="calForm" method="post" enctype="multipart/form-data">
+<input type="hidden" name="section" value="2"/>
+<input type="hidden" name="seq"/>
+<input type="hidden" name="workType" value="H"/>
+	<!-- 내용시작 -->
+	<div>
+		<table width="100%" style="text-align:center" cellspacing="0" cellpadding="0">
+			<caption>학교행사일정</caption>
+			<tbody>
+			<tr>
+				<th><!--<th height="48" width="56" align="center"><img src="/images/comm/calendar/img_life01.gif" width="36" height="38" alt="" />--></th>
+				<th style="position: relative;">
+				<select name="schdYear" title="연도선택" class="sel_year">
+					
+						<option value="2012"  >2012년</option>
+					
+						<option value="2013"  >2013년</option>
+					
+						<option value="2014"  >2014년</option>
+					
+						<option value="2015"  >2015년</option>
+					
+						<option value="2016"  >2016년</option>
+					
+						<option value="2017"  >2017년</option>
+					
+						<option value="2018"  >2018년</option>
+					
+						<option value="2019"  >2019년</option>
+					
+						<option value="2020"  >2020년</option>
+					
+						<option value="2021"  >2021년</option>
+					
+						<option value="2022"  >2022년</option>
+					
+						<option value="2023"  >2023년</option>
+					
+						<option value="2024"  >2024년</option>
+					
+						<option value="2025"  >2025년</option>
+					
+						<option value="2026" selected >2026년</option>
+					
+						<option value="2027"  >2027년</option>
+					
+				</select>
+				<a href="#calView1" onClick="javascript:goCalView('1');" title="1학기 선택" class="btn_semester" style="right: 70px;">
+					<img src="/images/comm/calendar/btn_1semester.gif" border="0" alt="1학기" align="absmiddle" />
+				</a>
+				<a href="#calView2" onClick="javascript:goCalView('2');" title="2학기 선택" class="btn_semester">
+					<img src="/images/comm/calendar/btn_2semester.gif" border="0" alt="2학기" align="absmiddle" />
+				</a>
+				</th>
+			</tr>
+			</tbody>
+		</table>
+		<table class="table_style02" style="margin-top:10px;" align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+			<caption>학기, 월별 학교행사일정</caption>
+			<colgroup>
+				<col style="width:10%">
+				<col style="width:30%">
+				<col style="width: auto;">
+			</colgroup>
+			<tr>
+				<th width="30" style="font-weight:blod">월</th>
+				<th width="200" style="font-weight:normal">달력</th>
+				<th style="font-weight:normal">행사내용</th>
+			</tr>
+			<tr>		<td>9월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>9월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='25'>
+<td>&nbsp;</td><td>&nbsp;</td><td align='right' valign='top'  ><font  >1</font></td>
+<td align='right' valign='top'  ><font  >2</font></td>
+<td align='right' valign='top'  ><font  >3</font></td>
+<td align='right' valign='top'  ><font  >4</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >5</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >6</font></td>
+<td align='right' valign='top'  ><font  >7</font></td>
+<td align='right' valign='top'  ><font  >8</font></td>
+<td align='right' valign='top'  ><font  >9</font></td>
+<td align='right' valign='top'  ><font  >10</font></td>
+<td align='right' valign='top'  ><font  >11</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >12</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >13</font></td>
+<td align='right' valign='top'  ><font  >14</font></td>
+<td align='right' valign='top'  ><font  >15</font></td>
+<td align='right' valign='top'  ><font  >16</font></td>
+<td align='right' valign='top'  ><font  >17</font></td>
+<td align='right' valign='top'  ><font  >18</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >19</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >20</font></td>
+<td align='right' valign='top'  ><font  >21</font></td>
+<td align='right' valign='top'  ><font  >22</font></td>
+<td align='right' valign='top'  ><font  >23</font></td>
+<td align='right' valign='top'  ><font  >24</font></td>
+<td align='right' valign='top'  ><font  >25</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >26</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >27</font></td>
+<td align='right' valign='top'  ><font  >28</font></td>
+<td align='right' valign='top'  ><font  >29</font></td>
+<td align='right' valign='top'  ><font  >30</font></td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117144'>01일&nbsp;:&nbsp;2026학년도 2학기 학기개시일</li>
+<li id='date1117145'>03일~04일&nbsp;:&nbsp;수강신청 정정</li>
+<li id='date1117146'>14일~16일&nbsp;:&nbsp;수강신청 철회</li>
+<li id='date1117147'>24일~27일&nbsp;:&nbsp;추석연휴</li>
+<li id='date1117148'>28일~10월02일&nbsp;:&nbsp;2학기 중간 강의평가</li>
+<li id='date1117149'>30일&nbsp;:&nbsp;학기개시일 30일</li>
+			</ul>		</td>	</tr><tr>		<td>10월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>10월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='25'>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td align='right' valign='top'  ><font  >1</font></td>
+<td align='right' valign='top'  ><font  >2</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >3</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >4</font></td>
+<td align='right' valign='top'  ><font  >5</font></td>
+<td align='right' valign='top'  ><font  >6</font></td>
+<td align='right' valign='top'  ><font  >7</font></td>
+<td align='right' valign='top'  ><font  >8</font></td>
+<td align='right' valign='top'  ><font  >9</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >10</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >11</font></td>
+<td align='right' valign='top'  ><font  >12</font></td>
+<td align='right' valign='top'  ><font  >13</font></td>
+<td align='right' valign='top'  ><font  >14</font></td>
+<td align='right' valign='top'  ><font  >15</font></td>
+<td align='right' valign='top'  ><font  >16</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >17</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >18</font></td>
+<td align='right' valign='top'  ><font  >19</font></td>
+<td align='right' valign='top'  ><font  >20</font></td>
+<td align='right' valign='top'  ><font  >21</font></td>
+<td align='right' valign='top'  ><font  >22</font></td>
+<td align='right' valign='top'  ><font  >23</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >24</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >25</font></td>
+<td align='right' valign='top'  ><font  >26</font></td>
+<td align='right' valign='top'  ><font  >27</font></td>
+<td align='right' valign='top'  ><font  >28</font></td>
+<td align='right' valign='top'  ><font  >29</font></td>
+<td align='right' valign='top'  ><font  >30</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >31</font></td>
+</tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117150'>05일&nbsp;:&nbsp;수업일수 1/3선</li>
+<li id='date1117151'>05일&nbsp;:&nbsp;대체공휴일(개천절)</li>
+<li id='date1117152'>09일&nbsp;:&nbsp;한글날</li>
+<li id='date1117153'>20일~26일&nbsp;:&nbsp;2학기 중간고사</li>
+<li id='date1117154'>22일&nbsp;:&nbsp;수업일수 1/2선</li>
+<li id='date1117155'>30일&nbsp;:&nbsp;학기개시일 60일</li>
+			</ul>		</td>	</tr><tr>		<td>11월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>11월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >1</font></td>
+<td align='right' valign='top'  ><font  >2</font></td>
+<td align='right' valign='top'  ><font  >3</font></td>
+<td align='right' valign='top'  ><font  >4</font></td>
+<td align='right' valign='top'  ><font  >5</font></td>
+<td align='right' valign='top'  ><font  >6</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >7</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >8</font></td>
+<td align='right' valign='top'  ><font  >9</font></td>
+<td align='right' valign='top'  ><font  >10</font></td>
+<td align='right' valign='top'  ><font  >11</font></td>
+<td align='right' valign='top'  ><font  >12</font></td>
+<td align='right' valign='top'  ><font  >13</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >14</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >15</font></td>
+<td align='right' valign='top'  ><font  >16</font></td>
+<td align='right' valign='top'  ><font  >17</font></td>
+<td align='right' valign='top'  ><font  >18</font></td>
+<td align='right' valign='top'  ><font  >19</font></td>
+<td align='right' valign='top'  ><font  >20</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >21</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >22</font></td>
+<td align='right' valign='top'  ><font  >23</font></td>
+<td align='right' valign='top'  ><font  >24</font></td>
+<td align='right' valign='top'  ><font  >25</font></td>
+<td align='right' valign='top'  ><font  >26</font></td>
+<td align='right' valign='top'  ><font  >27</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >28</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >29</font></td>
+<td align='right' valign='top'  ><font  >30</font></td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117156'>09일&nbsp;:&nbsp;수업일수 2/3선</li>
+<li id='date1117157'>16일~20일&nbsp;:&nbsp;동계 계절학기 수강신청</li>
+<li id='date1117158'>23일~12월04일&nbsp;:&nbsp;전공배정 신청</li>
+<li id='date1117159'>29일&nbsp;:&nbsp;학기개시일 90일</li>
+<li id='date1117160'>30일~12월11일&nbsp;:&nbsp;2학기 강의평가</li>
+			</ul>		</td>	</tr><tr>		<td>12월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>12월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='25'>
+<td>&nbsp;</td><td>&nbsp;</td><td align='right' valign='top'  ><font  >1</font></td>
+<td align='right' valign='top'  ><font  >2</font></td>
+<td align='right' valign='top'  ><font  >3</font></td>
+<td align='right' valign='top'  ><font  >4</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >5</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >6</font></td>
+<td align='right' valign='top'  ><font  >7</font></td>
+<td align='right' valign='top'  ><font  >8</font></td>
+<td align='right' valign='top'  ><font  >9</font></td>
+<td align='right' valign='top'  ><font  >10</font></td>
+<td align='right' valign='top'  ><font  >11</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >12</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >13</font></td>
+<td align='right' valign='top'  ><font  >14</font></td>
+<td align='right' valign='top'  ><font  >15</font></td>
+<td align='right' valign='top'  ><font  >16</font></td>
+<td align='right' valign='top'  ><font  >17</font></td>
+<td align='right' valign='top'  ><font  >18</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >19</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >20</font></td>
+<td align='right' valign='top'  ><font  >21</font></td>
+<td align='right' valign='top'  ><font  >22</font></td>
+<td align='right' valign='top'  ><font  >23</font></td>
+<td align='right' valign='top'  ><font  >24</font></td>
+<td align='right' valign='top'  ><font  >25</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >26</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >27</font></td>
+<td align='right' valign='top'  ><font  >28</font></td>
+<td align='right' valign='top'  ><font  >29</font></td>
+<td align='right' valign='top'  ><font  >30</font></td>
+<td align='right' valign='top'  ><font  >31</font></td>
+<td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117162'>07일~11일&nbsp;:&nbsp;군복무 중 취득학점 신청
+K-MOOC 취득학점 신청</li>
+<li id='date1117161'>08일~14일&nbsp;:&nbsp;보강주</li>
+<li id='date1117163'>15일~21일&nbsp;:&nbsp;2학기 기말고사</li>
+<li id='date1117164'>21일~28일&nbsp;:&nbsp;성적입력 및 성적열람</li>
+<li id='date1117165'>22일&nbsp;:&nbsp;동계방학</li>
+<li id='date1117166'>22일~01월13일&nbsp;:&nbsp;동계 계절학기 </li>
+<li id='date1117167'>25일&nbsp;:&nbsp;성탄절</li>
+			</ul>		</td>	</tr><tr>		<td>1월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>1월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='20'>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td align='right' valign='top'  ><font  >1</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >2</font></td>
+</tr>
+<tr height='20'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >3</font></td>
+<td align='right' valign='top'  ><font  >4</font></td>
+<td align='right' valign='top'  ><font  >5</font></td>
+<td align='right' valign='top'  ><font  >6</font></td>
+<td align='right' valign='top'  ><font  >7</font></td>
+<td align='right' valign='top'  ><font  >8</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >9</font></td>
+</tr>
+<tr height='20'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >10</font></td>
+<td align='right' valign='top'  ><font  >11</font></td>
+<td align='right' valign='top'  ><font  >12</font></td>
+<td align='right' valign='top'  ><font  >13</font></td>
+<td align='right' valign='top'  ><font  >14</font></td>
+<td align='right' valign='top'  ><font  >15</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >16</font></td>
+</tr>
+<tr height='20'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >17</font></td>
+<td align='right' valign='top'  ><font  >18</font></td>
+<td align='right' valign='top'  ><font  >19</font></td>
+<td align='right' valign='top'  ><font  >20</font></td>
+<td align='right' valign='top'  ><font  >21</font></td>
+<td align='right' valign='top'  ><font  >22</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >23</font></td>
+</tr>
+<tr height='20'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >24</font></td>
+<td align='right' valign='top'  ><font  >25</font></td>
+<td align='right' valign='top'  ><font  >26</font></td>
+<td align='right' valign='top'  ><font  >27</font></td>
+<td align='right' valign='top'  ><font  >28</font></td>
+<td align='right' valign='top'  ><font  >29</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >30</font></td>
+</tr>
+<tr height='20'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >31</font></td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117168'>01일&nbsp;:&nbsp;신정</li>
+<li id='date1117169'>04일~06일&nbsp;:&nbsp;성적정정 신청</li>
+<li id='date1117170'>18일~22일&nbsp;:&nbsp;재입학, 휴ㆍ복학, 전과, 다전공 신청</li>
+<li id='date1117171'>18일~22일&nbsp;:&nbsp;1학기 강의계획서 입력</li>
+			</ul>		</td>	</tr><tr>		<td>2월</td>		<td><table class='calendar_tb' width='100%' height='150 border='0' cellspacing='0' cellpadding='0'>
+<caption>2월 학교행사일정</caption>	<tr height='25'>
+		<th><img src='/images/comm/calendar/sun.gif' alt='일요일' /></th>
+		<th><img src='/images/comm/calendar/mon.gif' alt='월요일' /></th>
+		<th><img src='/images/comm/calendar/tue.gif' alt='화요일' /></th>
+		<th><img src='/images/comm/calendar/wed.gif' alt='수요일' /></th>
+		<th><img src='/images/comm/calendar/thu.gif' alt='목요일' /></th>
+		<th><img src='/images/comm/calendar/fri.gif' alt='금요일' /></th>
+		<th><img src='/images/comm/calendar/sat.gif' alt='토요일' /></th>
+	</tr>
+<tr height='25'>
+<td>&nbsp;</td><td align='right' valign='top'  ><font  >1</font></td>
+<td align='right' valign='top'  ><font  >2</font></td>
+<td align='right' valign='top'  ><font  >3</font></td>
+<td align='right' valign='top'  ><font  >4</font></td>
+<td align='right' valign='top'  ><font  >5</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >6</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >7</font></td>
+<td align='right' valign='top'  ><font  >8</font></td>
+<td align='right' valign='top'  ><font  >9</font></td>
+<td align='right' valign='top'  ><font  >10</font></td>
+<td align='right' valign='top'  ><font  >11</font></td>
+<td align='right' valign='top'  ><font  >12</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >13</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >14</font></td>
+<td align='right' valign='top'  ><font  >15</font></td>
+<td align='right' valign='top'  ><font  >16</font></td>
+<td align='right' valign='top'  ><font  >17</font></td>
+<td align='right' valign='top'  ><font  >18</font></td>
+<td align='right' valign='top'  ><font  >19</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >20</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >21</font></td>
+<td align='right' valign='top'  ><font  >22</font></td>
+<td align='right' valign='top'  ><font  >23</font></td>
+<td align='right' valign='top'  ><font  >24</font></td>
+<td align='right' valign='top'  ><font  >25</font></td>
+<td align='right' valign='top'  ><font  >26</font></td>
+<td align='right' valign='top' style="color:#0000FF;" ><font style="color:#0000FF;" >27</font></td>
+</tr>
+<tr height='25'>
+<td align='right' valign='top' style="color:#FF0000;" ><font style="color:#FF0000;" >28</font></td>
+<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117172'>02일~04일&nbsp;:&nbsp;1학기 수강신청</li>
+<li id='date1117173'>06일~09일&nbsp;:&nbsp;설날연휴</li>
+<li id='date1117174'>19일&nbsp;:&nbsp;2026학년도 전기 학위수여식</li>
+<li id='date1117175'>22일~26일&nbsp;:&nbsp;1학기 등록</li>
+<li id='date1117176'>25일&nbsp;:&nbsp;입학식 및 신입생 오리엔테이션</li>
+			</ul>		</td>	</tr>
+		</table>
+
+		<table class="table_style03" style="margin-top:10px;" align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+			<caption style='display:none;'>학기, 월별 학교행사일정</caption>
+			<tr>
+				<th width="15%" style="font-weight:normal">월</th>				
+				<th style="font-weight:normal" width="700px">행사내용</th>
+			</tr>
+			<tr>		<td>9월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117144'>01일&nbsp;:&nbsp;2026학년도 2학기 학기개시일</li>
+<li id='date1117145'>03일~04일&nbsp;:&nbsp;수강신청 정정</li>
+<li id='date1117146'>14일~16일&nbsp;:&nbsp;수강신청 철회</li>
+<li id='date1117147'>24일~27일&nbsp;:&nbsp;추석연휴</li>
+<li id='date1117148'>28일~10월02일&nbsp;:&nbsp;2학기 중간 강의평가</li>
+<li id='date1117149'>30일&nbsp;:&nbsp;학기개시일 30일</li>
+
+			</ul>		</td></tr><tr>		<td>10월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117150'>05일&nbsp;:&nbsp;수업일수 1/3선</li>
+<li id='date1117151'>05일&nbsp;:&nbsp;대체공휴일(개천절)</li>
+<li id='date1117152'>09일&nbsp;:&nbsp;한글날</li>
+<li id='date1117153'>20일~26일&nbsp;:&nbsp;2학기 중간고사</li>
+<li id='date1117154'>22일&nbsp;:&nbsp;수업일수 1/2선</li>
+<li id='date1117155'>30일&nbsp;:&nbsp;학기개시일 60일</li>
+
+			</ul>		</td></tr><tr>		<td>11월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117156'>09일&nbsp;:&nbsp;수업일수 2/3선</li>
+<li id='date1117157'>16일~20일&nbsp;:&nbsp;동계 계절학기 수강신청</li>
+<li id='date1117158'>23일~12월04일&nbsp;:&nbsp;전공배정 신청</li>
+<li id='date1117159'>29일&nbsp;:&nbsp;학기개시일 90일</li>
+<li id='date1117160'>30일~12월11일&nbsp;:&nbsp;2학기 강의평가</li>
+
+			</ul>		</td></tr><tr>		<td>12월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117162'>07일~11일&nbsp;:&nbsp;군복무 중 취득학점 신청
+K-MOOC 취득학점 신청</li>
+<li id='date1117161'>08일~14일&nbsp;:&nbsp;보강주</li>
+<li id='date1117163'>15일~21일&nbsp;:&nbsp;2학기 기말고사</li>
+<li id='date1117164'>21일~28일&nbsp;:&nbsp;성적입력 및 성적열람</li>
+<li id='date1117165'>22일&nbsp;:&nbsp;동계방학</li>
+<li id='date1117166'>22일~01월13일&nbsp;:&nbsp;동계 계절학기 </li>
+<li id='date1117167'>25일&nbsp;:&nbsp;성탄절</li>
+
+			</ul>		</td></tr><tr>		<td>1월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117168'>01일&nbsp;:&nbsp;신정</li>
+<li id='date1117169'>04일~06일&nbsp;:&nbsp;성적정정 신청</li>
+<li id='date1117170'>18일~22일&nbsp;:&nbsp;재입학, 휴ㆍ복학, 전과, 다전공 신청</li>
+<li id='date1117171'>18일~22일&nbsp;:&nbsp;1학기 강의계획서 입력</li>
+
+			</ul>		</td></tr><tr>		<td>2월</td>		<td valign="top" style="text-align:left">			<ul class="list_blue"><li id='date1117172'>02일~04일&nbsp;:&nbsp;1학기 수강신청</li>
+<li id='date1117173'>06일~09일&nbsp;:&nbsp;설날연휴</li>
+<li id='date1117174'>19일&nbsp;:&nbsp;2026학년도 전기 학위수여식</li>
+<li id='date1117175'>22일~26일&nbsp;:&nbsp;1학기 등록</li>
+<li id='date1117176'>25일&nbsp;:&nbsp;입학식 및 신입생 오리엔테이션</li>
+
+			</ul>		</td></tr>
+		</table>
+	</div>
+	<!-- /내용끝 -->
+
+
+<input type="hidden" name="sdate" />
+<input type="hidden" name="edate" />
+<input type="hidden" name="subject" />
+
+<!--iframe name="schdlCalFrm" width="0" height="0" style="display:none" title="행사일정"></iframe-->
+</form>	
+
+				
+								
+								
+
+
+
+
+
+
+
+
+
+
+
+<form commandName="DataMngVO" method="POST" name="DataMgtForm">
+<input type="hidden" name="regIP" value="221.160.197.2">
+
+<!-- 자료관리 -->
+<div class="data_manage">
+	<h5>자료관리</h5>
+	<dl>
+		<dt>교무처 박OO 팀장 041-660-1115 </dt>
+		
+		<dd>※ 게재된 내용 및 운영에 대한 개선사항이 있으면 자료관리 담당자에게 연락하시기 바랍니다.</dd>
+	</dl>
+</div>
+<!-- //자료관리 -->
+</form>
+								 
+								</div>
+							</section>
+							</div>
+						  </div>
+						<!-- 서브내용 -->
+				</div>
+				<!-- Sub Content -->
+				<!-- 푸터 -->
+				<div id="container">
+						
+
+
+
+
+
+
+
+
+<link href="/css/colorbox.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" language="javascript" src="/script/jquery.colorbox.js"></script>
+<script>
+$(document).ready(function(){
+		$(".iframe").colorbox({iframe:true, width:"57%", height:"100%"});
+		$(".iframes").colorbox({iframe:true, width:"55%", height:"100%"});
+	});
+</script>
+<!-- footer -->
+    <footer> 
+        
+        <!-- 교내사이트 바로가기 -->
+        <div class="footer_site_wrap">
+            <div class="inner">
+                <div class="fs_link01 box1">
+                    <h4>대학 / 대학원</h4>
+                    <ul>
+						<li><a href="/sub/info.do?page=0310&m=0310&s=hs" title="Hans 국제항공대학"> HICA 국제항공대학 </a></li>
+						<!-- 학부 -->
+                        <li><a href="/sub/info.do?page=0304&m=0304&s=hs" title="항공학부">항공학부</a></li>
+                        <li><a href="/sub/info.do?page=0316&m=0316&s=hs" title="항공우주공학부">항공우주공학부</a></li>
+                        <li><a href="/sub/info.do?page=0318&m=0318&s=hs" title="AIㆍSW학부">AIㆍSW학부</a></li>
+                        <li><a href="/sub/info.do?page=0317&m=0317&s=hs" title="항공관광학부">항공관광학부</a></li>
+                        <li><a href="/sub/info.do?page=0320&m=0320&s=hs" title="문화콘텐츠학부">문화콘텐츠학부</a></li>
+                        <li><a href="/sub/info.do?page=0306&m=0306&s=hs" title="보건학부">보건학부</a></li>
+                        <li><a href="/sub/info.do?page=0319&m=0319&s=hs" title="디자인융합학부">디자인융합학부</a></li>
+                        <li><a href="/sub/info.do?m=0302&page=030207&s=hs" title="해양·스포츠학부">해양·스포츠학부</a></li>
+                        <li><a href="/sub/info.do?page=0313&m=0313&s=hs" title="자유전공학부">자유전공학부</a></li>
+						
+						<!-- 학부 -->
+						<li><a href="https://early.hanseo.ac.kr" title="충남라이즈학부(계약학과)">충남라이즈학부(계약학과)</a></li>
+                        <li><a href="https://graduate.hanseo.ac.kr/main.do" title="일반대학원(새창으로 이동됩니다)"> 일반대학원 </a></li>
+                        <li><a href="https://gradarts.hanseo.ac.kr/main.do" title="국제디자인융합전문대학원(새창으로 이동됩니다)"> 국제디자인융합전문대학원 </a></li>
+                        <li><a href="https://gradinfo.hanseo.ac.kr/main.do" title="항공융합대학원(새창으로 이동됩니다)"> 항공융합대학원 </a></li>
+                        <li><a href="https://gradeduc.hanseo.ac.kr/main.do" title="교육대학원(새창으로 이동됩니다)"> 교육대학원 </a></li>
+                        <li><a href="https://gradhealth.hanseo.ac.kr/main.do" title="건강증진대학원(새창으로 이동됩니다)"> 건강증진대학원</a></li>
+                    </ul>
+                </div>
+                <div class="fs_link01 box2">
+                    <h4>교내 기관홈페이지</h4>
+                    <ul>
+                        <li><a href="https://safety.hanseo.ac.kr/main.do" title="국민안전교육본부(새창으로 이동됩니다)"> 재난안전교육원 </a></li>
+                        <li><a href="https://hanseoflight.hanseo.ac.kr/main.do" title="비행교육원(새창으로 이동됩니다)"> 비행교육원 </a></li>
+                        <li><a href="http://sanhak.hanseo.ac.kr/" title="산학협력단(새창으로 이동됩니다)"> 산학협력단 </a></li>
+                        <li><a href="http://library.hanseo.ac.kr/Cheetah/HSUL/Index/" title="연암도서관(새창으로 이동됩니다)"> 연암도서관 </a></li>
+                        <li><a href="https://helper.hanseo.ac.kr/html/kr/index.html" title="입학관리처(새창으로 이동됩니다)"> 입학관리처 </a></li>
+                        <li><a href="https://edulife.hanseo.ac.kr/main.do" title="평생교육원(새창으로 이동됩니다)"> 평생교육원 </a></li>
+                        <li><a href="https://mind.hanseo.ac.kr/main.do" title="학생상담센터(새창으로 이동됩니다)"> 학생상담센터 </a></li>
+                        <li><a href="http://humarine.or.kr/" title="해양스포츠교육원(새창으로 이동됩니다)"> 해양스포츠교육원</a></li>
+                        <li><a href="https://glocal.hanseo.ac.kr/" title="한서대 글로컬대학사업단(새창으로 이동됩니다)" target="_blank">한서대 글로컬대학사업단</a></li>
+						<li><a href="https://rise.hanseo.ac.kr/" title="한서RISE사업단(새창으로 이동됩니다)" target="_blank">한서RISE사업단</a></li>
+						<li><a href="https://ntis.hanseo.ac.kr/checkMenuLogin.jsp?p0=P6t0R90r4jxmm41o" title="전자출결시스템(새창으로 이동됩니다)" target="_blank"> 전자출결시스템</a></li>
+						<li><a href="https://amtc.hanseo.ac.kr/" title="항공기술교육원" target="_blank"> 항공기술교육원</a></li>
+						<li><a href="https://inv.hanseo.ac.kr/" title="HS혁신지원사업" target="_blank"> HS혁신지원사업</a></li>
+						<li><a href="https://rotc.hanseo.ac.kr/" title="HS혁신지원사업" target="_blank"> 학생군사교육단</a></li>
+<!--                         <li><a href="https://www.hanseo.ac.kr/sub/info.do?m=11&s=hs" title="미래교양교육센터" target="_blank"> 미래교양교육센터</a></li> -->
+                    </ul>
+                </div>
+                <div class="fs_link02 box3">
+                    <h4>기타 홈페이지</h4>
+                    <ul>
+                        <li><a href="https://eds.hanseo.ac.kr/" title="EDS전자문서관리시스템(새창으로 이동됩니다)" target="_blank">	EDS전자문서관리시스템 </a></li>
+						<li><a href="https://ntis.hanseo.ac.kr/checkMenu.jsp?p0=920OVso9408624r5" title="현장실습 실습기관 가입(새창으로 이동됩니다)" target="_blank"> 현장실습 실습기관 가입 </a></li>
+						<li><a href="https://ntis.hanseo.ac.kr/patis/common/saneopcheLoginForm.do" title="현장실습 실습기관 로그인(새창으로 이동됩니다)" target="_blank"> 현장실습 실습기관 로그인</a></li>
+                    	<li><a href="https://hussnet.com" title="HUSS 융합인재양성사업단(새창으로 이동됩니다)" target="_blank"> HUSS 융합인재양성사업단</a></li>
+                    	<li><a href="https://nd-coss.hanseo.ac.kr" title="차세대디스플레이 혁신융합대학사업단(새창으로 이동됩니다)" target="_blank">차세대디스플레이 혁신융합대학사업단</a></li>
+                    </ul>
+                </div>
+                
+                <!-- 오른쪽 바로가기 -->
+                <div class="fs_m_box">
+                    <div class="m_box">
+                        <ul>
+                            <li><a href="https://oc.hanseo.ac.kr" title="e-Class 시스템(새창으로 이동됩니다)">e-Class 시스템 </a></li>
+                            <li><a href="http://www.kosaf.go.kr/" title="한국장학재단(새창으로 이동됩니다)"> 한국장학재단 </a></li>
+							<li><a href="https://oc.hanseo.ac.kr/hsoc" title="e-Class 시스템(새창으로 이동됩니다)">Hanseo Online Campus </a></li>
+                            <li><a href="http://cons.ocu.ac.kr/" title="열린사이버대학교(새창으로 이동됩니다)"> 열린사이버대학교 </a></li>
+                            <li><a href="https://www.eslscat.com/class/hsu1"title="사이버토익Ⅰ,Ⅱ(새창으로 이동됩니다)"> 사이버토익Ⅰ,Ⅱ </a></li>
+                            <li><a href="https://www.eslscat.com/class/hsu2"title="사이버토익Ⅲ,Ⅳ(새창으로 이동됩니다)"> 사이버토익Ⅲ,Ⅳ </a></li>
+							<li><a href="https://www.eslscat.com/class/hsu1"title="사이버토익Ⅰ,Ⅱ(새창으로 이동됩니다)"> 쉽게 배우는 소프트웨어</a></li>
+                            <li><a href="https://www.eslscat.com/class/hsu1"title="사이버토익Ⅲ,Ⅳ(새창으로 이동됩니다)"> 공무원영어</a></li>
+                            <li><a href="http://e-learn.cnu.ac.kr/main/MainView.dunet"title="대전ㆍ충남권이러닝강좌(새창으로 이동됩니다)">DCS대학원격교육지원센터</a></li>
+                            <li><a href="https://www.hanseo.ac.kr/sub/info.do?page=0508&m=0508&s=hs"title="무선인터넷서비스(새창으로 이동됩니다)"> 무선인터넷서비스 </a></li>
+                            <li><a href="/sub/info.do?page=0404&m=0404&s=hs"title="제증명발급"> 제증명발급 </a></li>
+                            <li><a href="https://nportal.hanseo.ac.kr"title="학부모서비스(새창으로 이동됩니다)"> 학부모서비스 </a></li>
+                            <li><a href="/sub/info.do?m=011001&page=01100103&s=hs"title="통학버스"> 통학버스 </a></li>
+                            <li><a href="http://prism.hanseo.ac.kr/"title="프리즘교육기반통합시스템(새창으로 이동됩니다)"> 프리즘교육기반통합시스템 </a></li>
+                            <li><a href="http://sanhak.hanseo.ac.kr/"title="산학협력단(새창으로 이동됩니다)"> 산학협력단 </a></li>
+                            <!--<li><a href="https://safety.hanseo.ac.kr/main.do"title="HSU국민안전교육본부(새창으로 이동됩니다)"> HSU국민안전교육본부 </a></li>-->
+							<li><a href="https://union.sdu.ac.kr"title="SDU(서울디지털대학교) 이러닝 강좌  (새창으로 이동됩니다)">SDU(서울디지털대학교) 이러닝 강좌  </a></li>
+                            <!--241125추가-->
+                            <li><a href="/sub/info.do?m=10&s=hs"title="교수학습개발센터  (새창으로 이동됩니다)">교수학습개발센터</a></li>
+                            <!--//241125추가-->
+                            <li><a href="https://portal.displaycoss.ac.kr/" title="차세대디스플레이 이러닝 강좌" target="_blank">차세대디스플레이 이러닝 강좌</a></li>
+                            <li><a href="https://www.hanseo.ac.kr/sub/info.do?m=11&s=hs" title="미래교양교육센터" target="_blank"> 미래교양교육센터</a></li>
+                            <li><a href="/sub/info.do?m=12&s=hs" title="혁신교육연구센터" target="_blank"> 혁신교육연구센터</a></li>
+                            
+                        </ul>
+                    </div>
+                </div>
+                <!--// 오른쪽바로가기 --> 
+            </div>
+            
+            <!-- 모바일용 푸터링크 -->
+            <div class="footBtnWrap">
+                <div class="btn_inner">
+                    <div class="footBtn">
+                        <button type="button">대학 / 대학원</button>
+                        <div>
+                            <ul>
+                                <li><a href="/sub/info.do?page=0310&m=0310&s=hs" title="Hans 국제항공대학"> HICA 국제항공대학 </a></li>
+								<!-- 학부 -->
+		                        <li><a href="/sub/info.do?page=0304&m=0304&s=hs" title="항공학부">항공학부</a></li>
+		                        <li><a href="/sub/info.do?page=0316&m=0316&s=hs" title="항공우주공학부">항공우주공학부</a></li>
+		                        <li><a href="/sub/info.do?page=0318&m=0318&s=hs" title="AIㆍSW학부">AIㆍSW학부</a></li>
+		                        <li><a href="/sub/info.do?page=0317&m=0317&s=hs" title="항공관광학부">항공관광학부</a></li>
+		                        <li><a href="/sub/info.do?page=0320&m=0320&s=hs" title="문화콘텐츠학부">문화콘텐츠학부</a></li>
+		                        <li><a href="/sub/info.do?page=0306&m=0306&s=hs" title="보건학부">보건학부</a></li>
+		                        <li><a href="/sub/info.do?page=0319&m=0319&s=hs" title="디자인융합학부">디자인융합학부</a></li>
+		                        <li><a href="/sub/info.do?m=0302&page=030207&s=hs" title="해양·스포츠학부">해양·스포츠학부</a></li>
+		                        <li><a href="/sub/info.do?page=0313&m=0313&s=hs" title="자유전공학부">자유전공학부</a></li>
+								
+								<!-- 학부 -->
+								<li><a href="https://early.hanseo.ac.kr" title="충남라이즈학부(계약학과)">충남라이즈학부(계약학과)</a></li>
+		                        <li><a href="https://graduate.hanseo.ac.kr/main.do" title="일반대학원(새창으로 이동됩니다)"> 일반대학원 </a></li>
+		                        <li><a href="https://gradarts.hanseo.ac.kr/main.do" title="국제디자인융합전문대학원(새창으로 이동됩니다)"> 국제디자인융합전문대학원 </a></li>
+		                        <li><a href="https://gradinfo.hanseo.ac.kr/main.do" title="항공융합대학원(새창으로 이동됩니다)"> 항공융합대학원 </a></li>
+		                        <li><a href="https://gradeduc.hanseo.ac.kr/main.do" title="교육대학원(새창으로 이동됩니다)"> 교육대학원 </a></li>
+		                        <li><a href="https://gradhealth.hanseo.ac.kr/main.do" title="건강증진대학원(새창으로 이동됩니다)"> 건강증진대학원</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="footBtn">
+                        <button type="button">교내 기관홈페이지</button>
+                        <div>
+                            <ul>
+                                <li><a href="https://safety.hanseo.ac.kr/main.do" title="국민안전교육본부(새창으로 이동됩니다)"> 재난안전교육원 </a></li>
+		                        <li><a href="https://hanseoflight.hanseo.ac.kr/main.do" title="비행교육원(새창으로 이동됩니다)"> 비행교육원 </a></li>
+		                        <li><a href="http://sanhak.hanseo.ac.kr/" title="산학협력단(새창으로 이동됩니다)"> 산학협력단 </a></li>
+		                        <li><a href="http://library.hanseo.ac.kr/Cheetah/HSUL/Index/" title="연암도서관(새창으로 이동됩니다)"> 연암도서관 </a></li>
+		                        <li><a href="https://helper.hanseo.ac.kr/html/kr/index.html" title="입학관리처(새창으로 이동됩니다)"> 입학관리처 </a></li>
+		                        <li><a href="https://edulife.hanseo.ac.kr/main.do" title="평생교육원(새창으로 이동됩니다)"> 평생교육원 </a></li>
+		                        <li><a href="https://mind.hanseo.ac.kr/main.do" title="학생상담센터(새창으로 이동됩니다)"> 학생상담센터 </a></li>
+		                        <li><a href="http://humarine.or.kr/" title="해양스포츠교육원(새창으로 이동됩니다)"> 해양스포츠교육원</a></li>
+		                        <li><a href="https://glocal.hanseo.ac.kr/" title="한서대 글로컬대학사업단(새창으로 이동됩니다)" target="_blank">한서대 글로컬대학사업단</a></li>
+								<li><a href="https://rise.hanseo.ac.kr/" title="한서RISE사업단(새창으로 이동됩니다)" target="_blank">한서RISE사업단</a></li>
+								<li><a href="https://ntis.hanseo.ac.kr/checkMenuLogin.jsp?p0=P6t0R90r4jxmm41o" title="전자출결시스템(새창으로 이동됩니다)" target="_blank"> 전자출결시스템</a></li>
+								<li><a href="https://amtc.hanseo.ac.kr/" title="항공기술교육원" target="_blank"> 항공기술교육원</a></li>
+								<li><a href="https://inv.hanseo.ac.kr/" title="HS혁신지원사업" target="_blank"> HS혁신지원사업</a></li>
+								<li><a href="https://rotc.hanseo.ac.kr/" title="HS혁신지원사업" target="_blank"> 학생군사교육단</a></li>
+<!-- 		                        <li><a href="https://www.hanseo.ac.kr/sub/info.do?m=11&s=hs" title="미래교양교육센터" target="_blank"> 미래교양교육센터</a></li> -->
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="footBtn">
+                        <button type="button">기타 홈페이지</button>
+                        <div>
+                            <ul>
+                                <li><a href="https://eds.hanseo.ac.kr/" title="EDS전자문서관리시스템(새창으로 이동됩니다)" target="_blank">	EDS전자문서관리시스템 </a></li>
+								<li><a href="https://ntis.hanseo.ac.kr/checkMenu.jsp?p0=920OVso9408624r5" title="현장실습 실습기관 가입(새창으로 이동됩니다)" target="_blank"> 현장실습 실습기관 가입 </a></li>
+								<li><a href="https://ntis.hanseo.ac.kr/patis/common/saneopcheLoginForm.do" title="현장실습 실습기관 로그인(새창으로 이동됩니다)" target="_blank"> 현장실습 실습기관 로그인</a></li>
+		                    	<li><a href="https://hussnet.com" title="HUSS 융합인재양성사업단(새창으로 이동됩니다)" target="_blank"> HUSS 융합인재양성사업단</a></li>
+								<li><a href="https://nd-coss.hanseo.ac.kr" title="차세대디스플레이 혁신융합대학사업단(새창으로 이동됩니다)" target="_blank">차세대디스플레이 혁신융합대학사업단</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--// 모바일용 푸터링크 --> 
+            
+        </div>
+        <!--// 교내사이트 바로가기 -->
+        
+        <div class="area_footer">
+            <div class="box_footer">
+                <div class="footer_link">
+                    <ul>
+                        <li class="point"><a href="/sub/hs/life/contents/050406.jsp" title="개인정보처리방침" class="iframes">개인정보처리방침</a></li>
+                        <li><a href="/sub/hs/life/contents/050411.jsp" title="영상정보처리기기운영관리방침" class="iframes">영상정보처리기기운영관리방침</a></li>
+                        <li><a href="/sub/hs/life/contents/050407.jsp" title="이메일무단수집거부" class="iframes">이메일무단수집거부</a></li>
+						<li><a href="https://academyinfo.go.kr/pubinfo/pubinfo0020/list.do?schlId=0000199" title="대학정보공시(새창으로 이동됩니다)" target="_blank">대학정보공시</a></li>
+						<li><a href="https://www.hanseo.ac.kr/sub/info.do?s=hs&m=010507&page=01050702" title="공익제보센터(새창으로 이동됩니다)" target="_blank">공익제보센터</a></li>
+                    </ul>
+                </div>
+                <div class="box_info">
+                    <address>
+                    충남 서산시 해미면 한서1로 46 (31962) TEL : 041-660-1144 / FAX : 041-660-1149 <br>
+                    (태안캠퍼스) 충남 태안군 남면 곰섬로 236-49 (32158) TEL : 041-671-6122 / FAX : 041-671-6129
+                    </address>
+                    <p class="copyright">Copyrights (c)2018 <span class="copy_blue">Hanseo University</span>. All rights reserved.</p>
+                </div>
+                
+                <!-- SNS -->
+                <ul class="f_sns">
+                    <li><a href="https://www.facebook.com/hsuniv.sns" title="페이스북(새창으로 이동됩니다)" target="_blank"><img src="/images/template/00004/common/f_sns_f.png"  alt="페이스북"></a></li>
+                    <!--<li><a href="https://twitter.com/hanseo_univ" title="트위터"><img src="/images/template/00004/common/f_sns_t.png" alt="트위터(새창으로 이동됩니다)" target="_blank"></a></li>-->
+                    <li><a href="https://m.blog.naver.com/PostList.naver?blogId=hanul10th" title="블로그"><img src="/images/template/00004/common/f_sns_b.png"  alt="블로그"></a></li>
+                    <li><a href="https://www.instagram.com/hanul_sns/" title="인스타그램(새창으로 이동됩니다)" target="_blank"><img src="/images/template/00004/common/f_sns_i.png" alt="인스타그램"></a></li>
+                </ul>
+                
+                <!--// SNS --> 
+                
+            </div>
+        </div>
+    </footer>
+    <!-- // footer --> 
+				</div>       
+			</div>
+		</body>
+	</html>

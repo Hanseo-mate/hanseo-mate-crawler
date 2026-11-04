@@ -189,6 +189,23 @@ def get_db_session() -> Session:
     return SQLALCHEMY_SESSION_FACTORY()
 
 
+# Same database/configuration and session lifecycle, with an isolated bounded pool
+# for calendar admission. Existing cafeteria/notice timeout behavior is unchanged.
+ACADEMIC_CALENDAR_ENGINE = create_engine(
+    _build_sqlalchemy_database_url(), future=True, pool_pre_ping=True,
+    connect_args={"connect_timeout": 3, "read_timeout": 5, "write_timeout": 5},
+    pool_timeout=2,
+)
+ACADEMIC_CALENDAR_SESSION_FACTORY = sessionmaker(
+    bind=ACADEMIC_CALENDAR_ENGINE, autoflush=False, autocommit=False,
+    expire_on_commit=False, future=True,
+)
+
+
+def get_calendar_db_session() -> Session:
+    return ACADEMIC_CALENDAR_SESSION_FACTORY()
+
+
 def ensure_cafeteria_schema() -> None:
     inspector = inspect(SQLALCHEMY_ENGINE)
     table_names = set(inspector.get_table_names())

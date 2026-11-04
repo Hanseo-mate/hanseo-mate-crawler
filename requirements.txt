@@ -4,4 +4,5 @@ pymysql
 sqlalchemy
 html5lib
 fastapi
+pydantic>=2,<3
 uvicorn
